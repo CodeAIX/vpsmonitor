@@ -1,4 +1,4 @@
-import { memo, useState } from "react"
+import { memo } from "react"
 import { Trans } from "@lingui/react/macro"
 import { compareSemVer, parseSemVer, supportsNetworkMonitors } from "@/lib/utils"
 import { SystemStatus } from "@/lib/enums"
@@ -11,14 +11,11 @@ import { MemoryChart, ContainerMemoryChart, SwapChart } from "./system/charts/me
 import { RootDiskCharts, ExtraFsCharts } from "./system/charts/disk-charts"
 import { ZfsCharts } from "./system/charts/storage-pool-charts"
 import { BandwidthChart, ContainerNetworkChart } from "./system/charts/network-charts"
-import { TemperatureChart, FanChart, BatteryChart } from "./system/charts/sensor-charts"
-import { WiFiChart } from "./system/charts/wifi-chart"
 import { GpuPowerChart, GpuCharts } from "./system/charts/gpu-charts"
 import {
 	LazyContainersTable,
 	LazyNetworkMonitorsTable,
 	LazyPackageUpdatesTable,
-	LazySmartTable,
 	LazySystemdTable,
 	LazyZfsTable,
 	SystemdTable,
@@ -31,7 +28,6 @@ import TrafficPanel from "./system/traffic-panel"
 import HistoryStatus from "./system/history-status"
 
 const SEMVER_0_14_0 = parseSemVer("0.14.0")
-const SEMVER_0_15_0 = parseSemVer("0.15.0")
 
 export default memo(function SystemDetail({ id }: { id: string }) {
 	const systemData = useSystemData(id)
@@ -62,16 +58,12 @@ export default memo(function SystemDetail({ id }: { id: string }) {
 		hasGpuPowerData,
 	} = systemData
 
-	// extra margin to add to bottom of page, specifically for temperature chart,
-	// where the tooltip can go past the bottom of the page if lots of sensors
-	const [pageBottomExtraMargin, setPageBottomExtraMargin] = useState(0)
 
 	if (!system.id) {
 		return null
 	}
 
 	const hasContainers = containerData.length > 0
-	const maybeHasSmartData = compareSemVer(chartData.agentVersion, SEMVER_0_15_0) >= 0
 	const hasContainersTable = hasContainers && compareSemVer(chartData.agentVersion, SEMVER_0_14_0) >= 0
 	const hasSystemd = system.info.sv
 	const hasGpu = hasGpuData || hasGpuPowerData
@@ -138,12 +130,9 @@ export default memo(function SystemDetail({ id }: { id: string }) {
 
 					<LoadAverageChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} />
 
-					<TemperatureChart {...coreProps} />
 
-					<FanChart {...coreProps} />
 
-					<BatteryChart system={system} {...coreProps} />
-					<WiFiChart system={system} {...coreProps} />
+
 
 					{hasGpuPowerData && <GpuPowerChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} />}
 				</div>
@@ -164,7 +153,6 @@ export default memo(function SystemDetail({ id }: { id: string }) {
 
 				{hasZfs && <LazyZfsTable systemId={system.id} />}
 
-				{maybeHasSmartData && <LazySmartTable systemId={system.id} />}
 
 				{hasContainersTable && <LazyContainersTable systemId={system.id} />}
 
@@ -230,10 +218,9 @@ export default memo(function SystemDetail({ id }: { id: string }) {
 						<LoadAverageChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} />
 						<MemoryChart {...coreProps} />
 						<SwapChart chartData={chartData} grid={grid} dataEmpty={dataEmpty} systemStats={systemStats} />
-						<TemperatureChart {...coreProps} setPageBottomExtraMargin={setPageBottomExtraMargin} />
-						<FanChart {...coreProps} />
-						<BatteryChart system={system} {...coreProps} />
-						{pageBottomExtraMargin > 0 && <div style={{ marginBottom: pageBottomExtraMargin }}></div>}
+
+
+
 					</div>
 				</TabsContent>
 
@@ -242,7 +229,7 @@ export default memo(function SystemDetail({ id }: { id: string }) {
 						<>
 							<div className="grid xl:grid-cols-2 gap-4">
 								<BandwidthChart {...coreProps} systemStats={systemStats} />
-								<WiFiChart system={system} {...coreProps} />
+
 							</div>
 							{hasNetworkMonitors && <LazyNetworkMonitorsTable systemId={system.id} />}
 						</>
@@ -261,7 +248,7 @@ export default memo(function SystemDetail({ id }: { id: string }) {
 							<ExtraFsCharts systemData={systemData} />
 							{hasZfs && <ZfsCharts systemData={systemData} />}
 							{hasZfs && <LazyZfsTable systemId={system.id} />}
-							{maybeHasSmartData && <LazySmartTable systemId={system.id} />}
+
 						</>
 					)}
 				</TabsContent>

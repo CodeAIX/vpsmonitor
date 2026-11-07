@@ -132,7 +132,7 @@ export default function ConfigYaml() {
 							const url = URL.createObjectURL(new Blob([configContent], { type: "text/yaml;charset=utf-8" }))
 							const link = document.createElement("a")
 							link.href = url
-							link.download = exportFormat === "traffic" ? "vpsmonitor-plus-traffic.yml" : "vpsmonitor-config.yml"
+							link.download = exportFormat === "traffic" ? "vpsmonitor-traffic.yml" : "vpsmonitor-config.yml"
 							link.click()
 							setTimeout(() => URL.revokeObjectURL(url), 1000)
 						}}

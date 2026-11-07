@@ -23,7 +23,7 @@ export function FooterRepoLink() {
 				className="text-muted-foreground hover:text-foreground duration-75"
 				rel="noopener"
 			>
-				vpsmonitor {globalThis.VPSMONITOR.PLUS_VERSION || "dev"} · {globalThis.VPSMONITOR.HUB_VERSION}
+				vpsmonitor {globalThis.VPSMONITOR.PRODUCT_VERSION || "dev"}
 			</a>
 			{newVersion?.v && (
 				<>

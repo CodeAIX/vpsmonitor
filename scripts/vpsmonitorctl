@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""Source-deployment lifecycle and read-only diagnostics. Never prints secrets."""
+import argparse
+import datetime
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def docker_command(role):
+    command = ["docker"]
+    context = os.environ.get("VPSMONITOR_DOCKER_CONTEXT")
+    if context:
+        command += ["--context", context]
+    compose = command + ["compose"]
+    if (ROOT / "deploy/.env").is_file():
+        compose += ["--env-file", str(ROOT / "deploy/.env")]
+    compose += ["-f", str(ROOT / "deploy" / (role + ".compose.yml"))]
+    return command, compose
+
+
+def capture(command, **kwargs):
+    return subprocess.check_output(command, text=True, **kwargs).strip()
+
+
+def inspect_project(role):
+    docker, compose = docker_command(role)
+    container = capture(compose + ["ps", "-q", role])
+    if not container:
+        raise RuntimeError("No running " + role + " container for this project")
+    info = json.loads(capture(docker + ["inspect", container]))[0]
+    if not info["State"]["Running"]:
+        raise RuntimeError("Container is not running")
+    destination = "/vpsmonitor_data" if role == "hub" else "/var/lib/vpsmonitor-agent"
+    if not any(m["Destination"] == destination and m.get("RW") for m in info["Mounts"]):
+        raise RuntimeError("Missing writable persistent data mount")
+    if role == "agent":
+        if info["HostConfig"]["NetworkMode"] != "host":
+            raise RuntimeError("Native host traffic requires Docker host networking")
+        env = dict(item.split("=", 1) for item in info["Config"]["Env"] if "=" in item)
+        if env.get("VPSMONITOR_NETWORK_SCOPE") != "host" or env.get("DISABLE_SSH") != "true":
+            raise RuntimeError("Use the generated host-scope, outbound-only Agent configuration")
+        capture(docker + ["exec", container, "/agent", "health"], stderr=subprocess.DEVNULL)
+        paths = capture(docker + ["exec", container, "find", destination + "/traffic", "-name", "ledger-v1.json"], stderr=subprocess.DEVNULL).splitlines()
+        if not paths:
+            raise RuntimeError("No native ledger yet; check uplink selection and storage")
+        fresh = []
+        for path in paths[:64]:
+            state = json.loads(capture(docker + ["exec", container, "cat", path]))
+            if -5 <= time.time() - state["updated"] <= 90:
+                fresh.append(state)
+        if len(fresh) != 1:
+            raise RuntimeError("Expected one fresh native accounting uplink")
+        state = fresh[0]
+        stamp = datetime.datetime.fromtimestamp(state["updated"], datetime.timezone.utc).isoformat()
+        return "agent: host network, persistent ledger, uplink " + state["baseline"]["Name"] + ", updated " + stamp
+    # /api/health does not require access to a user's account or identity key.
+    capture(docker + ["exec", container, "/hub", "--version"])
+    return "hub: container running with persistent data; inspect the web health and login separately"
+
+
+def main():
+    parser = argparse.ArgumentParser(description="vpsmonitor source deployment and diagnostics")
+    parser.add_argument("role", choices=["hub", "agent"])
+    parser.add_argument("action", choices=["start", "update", "status", "logs", "doctor", "stop"])
+    args = parser.parse_args()
+    docker, compose = docker_command(args.role)
+    if args.action == "doctor":
+        print(inspect_project(args.role))
+    elif args.action in ("start", "update"):
+        if args.action == "update":
+            if capture(["git", "status", "--porcelain"], cwd=ROOT):
+                raise RuntimeError("Commit or save source changes before updating")
+            subprocess.run(["git", "pull", "--ff-only", "origin", "main"], cwd=ROOT, check=True)
+        env = os.environ.copy()
+        env["COMMIT"] = capture(["git", "rev-parse", "HEAD"], cwd=ROOT)
+        subprocess.run(compose + ["config", "--quiet"], env=env, check=True)
+        subprocess.run(compose + ["up", "-d", "--build", "--no-deps", args.role], env=env, check=True)
+        print("Started " + args.role + "; run doctor after initialization. Data volumes were retained.")
+    elif args.action == "status":
+        subprocess.run(compose + ["ps"], check=True)
+    elif args.action == "logs":
+        subprocess.run(compose + ["logs", "--tail=80", args.role], check=True)
+    else:
+        subprocess.run(compose + ["stop", args.role], check=True)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (RuntimeError, OSError, subprocess.CalledProcessError, ValueError, KeyError) as exc:
+        print("vpsmonitor: " + str(exc), file=sys.stderr)
+        sys.exit(1)

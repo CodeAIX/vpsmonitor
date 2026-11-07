@@ -37,12 +37,12 @@ export function useSystemData(id: string) {
 	const chartTime = useStore($chartTime)
 	const maxValues = useStore($maxValues)
 	const [grid, _setGrid] = useState<boolean>(
-		() => $userSettings.get().grid ?? JSON.parse(localStorage.getItem("besz-grid") ?? "null") ?? true
+		() => $userSettings.get().grid ?? JSON.parse(localStorage.getItem("vpsm-grid") ?? "null") ?? true
 	)
 	const [displayMode, _setDisplayMode] = useState<"default" | "tabs">(
 		() =>
 			$userSettings.get().displayMode ??
-			(JSON.parse(localStorage.getItem("besz-displayMode") || "null") as "default" | "tabs" | null) ??
+			(JSON.parse(localStorage.getItem("vpsm-displayMode") || "null") as "default" | "tabs" | null) ??
 			"default"
 	)
 
@@ -62,13 +62,13 @@ export function useSystemData(id: string) {
 
 	const setGrid = useCallback((v: boolean) => {
 		_setGrid(v)
-		localStorage.setItem("besz-grid", JSON.stringify(v))
+		localStorage.setItem("vpsm-grid", JSON.stringify(v))
 		$userSettings.setKey("grid", v)
 		queueUserSettings({ grid: v })
 	}, [])
 	const setDisplayMode = useCallback((v: "default" | "tabs") => {
 		_setDisplayMode(v)
-		localStorage.setItem("besz-displayMode", JSON.stringify(v))
+		localStorage.setItem("vpsm-displayMode", JSON.stringify(v))
 		$userSettings.setKey("displayMode", v)
 		queueUserSettings({ displayMode: v })
 	}, [])

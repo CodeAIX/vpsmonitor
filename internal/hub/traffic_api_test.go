@@ -34,7 +34,7 @@ func trafficAPIRequest(t *testing.T, handler http.Handler, method, path, token, 
 func seedTrafficAPI(t *testing.T, app core.App, id string) {
 	t.Helper()
 	now := time.Now().UTC().Add(-2 * time.Minute)
-	snapshot := &traffic.Snapshot{SchemaVersion: 1, Status: traffic.OK, ObservedAt: now.Unix(), Timebase: "utc", UTCValidFromDay: now.AddDate(0, 0, -60).Format(time.DateOnly), RefreshSeconds: 300, SaveIntervalSeconds: 300, VNStatVersion: "2.13", Interfaces: []traffic.InterfaceDaily{{Name: "eth0", SourceCreatedAt: now.AddDate(0, 0, -60).Unix(), SourceUpdatedAt: now.Unix(), Days: []traffic.DailyBucket{{Day: now.Format(time.DateOnly), RxBytes: 100, TxBytes: 200}}}}}
+	snapshot := &traffic.Snapshot{SchemaVersion: 1, Status: traffic.OK, ObservedAt: now.Unix(), Timebase: "utc", UTCValidFromDay: now.AddDate(0, 0, -60).Format(time.DateOnly), RefreshSeconds: 300, SaveIntervalSeconds: 300, CollectorVersion: "2.13", Interfaces: []traffic.InterfaceDaily{{Name: "eth0", SourceCreatedAt: now.AddDate(0, 0, -60).Unix(), SourceUpdatedAt: now.Unix(), Days: []traffic.DailyBucket{{Day: now.Format(time.DateOnly), RxBytes: 100, TxBytes: 200}}}}}
 	require.NoError(t, systems.SaveTrafficSnapshot(t.Context(), app, id, snapshot))
 }
 
@@ -65,7 +65,8 @@ func TestTrafficAPIAuthorizationAndSettings(t *testing.T) {
 	require.Equal(t, 404, code)
 	code, view := trafficAPIRequest(t, handler, "GET", base+"detail?system="+record.Id, ownerToken, "")
 	require.Equal(t, 200, code)
-	require.Equal(t, "unconfigured", view["status"])
+	require.Equal(t, "ok", view["status"])
+	require.Equal(t, "eth0", view["iface"], "the sole native uplink is configured automatically")
 	settingsPath := base + "settings?system=" + record.Id
 	code, _ = trafficAPIRequest(t, handler, "PATCH", settingsPath, readerToken, `{"iface":"eth0"}`)
 	require.Equal(t, 403, code)

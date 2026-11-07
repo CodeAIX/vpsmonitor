@@ -91,7 +91,7 @@ export default function NetworkMonitorsTableNew({
 	isLoading: boolean
 }) {
 	const sortSettingsKey = systemId ? "monitorSortModeSystem" : "monitorSortMode"
-	const sortStorageKey = `besz-sort-np-target-${systemId ? 1 : 0}`
+	const sortStorageKey = `vpsm-sort-np-target-${systemId ? 1 : 0}`
 	const [sorting, setSorting] = useState<SortingState>(
 		() =>
 			$userSettings.get()[sortSettingsKey] ??
@@ -101,7 +101,7 @@ export default function NetworkMonitorsTableNew({
 	)
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-		() => $userSettings.get().monitorCols ?? JSON.parse(localStorage.getItem("besz-monitor-cols") || "{}")
+		() => $userSettings.get().monitorCols ?? JSON.parse(localStorage.getItem("vpsm-monitor-cols") || "{}")
 	)
 	const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
 	const [globalFilter, setGlobalFilter] = useState("")
@@ -132,7 +132,7 @@ export default function NetworkMonitorsTableNew({
 		(updater: VisibilityState | ((prev: VisibilityState) => VisibilityState)) => {
 			setColumnVisibility((prev) => {
 				const next = typeof updater === "function" ? updater(prev) : updater
-				localStorage.setItem("besz-monitor-cols", JSON.stringify(next))
+				localStorage.setItem("vpsm-monitor-cols", JSON.stringify(next))
 				$userSettings.setKey("monitorCols", next)
 				queueUserSettings({ monitorCols: next })
 				return next

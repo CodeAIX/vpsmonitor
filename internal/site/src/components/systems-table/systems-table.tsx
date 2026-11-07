@@ -74,18 +74,18 @@ export default function SystemsTable() {
 	const [statusFilter, setStatusFilter] = useState<StatusFilter>(
 		() =>
 			$userSettings.get().statusFilter ??
-			(JSON.parse(localStorage.getItem("besz-statusFilter") || "null") as StatusFilter | null) ??
+			(JSON.parse(localStorage.getItem("vpsm-statusFilter") || "null") as StatusFilter | null) ??
 			"all"
 	)
 	const [sorting, setSorting] = useState<SortingState>(
 		() =>
 			$userSettings.get().sortMode ??
-			JSON.parse(sessionStorage.getItem("besz-sortMode") || "null") ?? [{ id: "system", desc: false }]
+			JSON.parse(sessionStorage.getItem("vpsm-sortMode") || "null") ?? [{ id: "system", desc: false }]
 	)
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const { pagination, onPaginationChange, resetPageIndex } = usePagination()
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-		() => $userSettings.get().cols ?? JSON.parse(localStorage.getItem("besz-cols") || "{}")
+		() => $userSettings.get().cols ?? JSON.parse(localStorage.getItem("vpsm-cols") || "{}")
 	)
 
 	// Apply settings from server once they load (handles incognito / new devices)
@@ -115,7 +115,7 @@ export default function SystemsTable() {
 		(updater: VisibilityState | ((prev: VisibilityState) => VisibilityState)) => {
 			setColumnVisibility((prev) => {
 				const next = typeof updater === "function" ? updater(prev) : updater
-				localStorage.setItem("besz-cols", JSON.stringify(next))
+				localStorage.setItem("vpsm-cols", JSON.stringify(next))
 				$userSettings.setKey("cols", next)
 				queueUserSettings({ cols: next })
 				return next
@@ -129,7 +129,7 @@ export default function SystemsTable() {
 			const next = value as StatusFilter
 			setStatusFilter(next)
 			resetPageIndex()
-			localStorage.setItem("besz-statusFilter", JSON.stringify(next))
+			localStorage.setItem("vpsm-statusFilter", JSON.stringify(next))
 			$userSettings.setKey("statusFilter", next)
 			queueUserSettings({ statusFilter: next })
 		},
@@ -139,7 +139,7 @@ export default function SystemsTable() {
 	const handleViewModeChange = useCallback((view: string) => {
 		const next = view as ViewMode
 		setViewMode(next)
-		localStorage.setItem("besz-viewMode", JSON.stringify(next))
+		localStorage.setItem("vpsm-viewMode", JSON.stringify(next))
 		$userSettings.setKey("viewMode", next)
 		queueUserSettings({ viewMode: next })
 	}, [])
@@ -148,7 +148,7 @@ export default function SystemsTable() {
 		(updater: SortingState | ((prev: SortingState) => SortingState)) => {
 			setSorting((prev) => {
 				const next = typeof updater === "function" ? updater(prev) : updater
-				sessionStorage.setItem("besz-sortMode", JSON.stringify(next))
+				sessionStorage.setItem("vpsm-sortMode", JSON.stringify(next))
 				$userSettings.setKey("sortMode", next)
 				queueUserSettings({ sortMode: next })
 				return next
@@ -177,7 +177,7 @@ export default function SystemsTable() {
 	const [viewMode, setViewMode] = useState<ViewMode>(
 		() =>
 			$userSettings.get().viewMode ??
-			(JSON.parse(localStorage.getItem("besz-viewMode") || "null") as ViewMode | null) ??
+			(JSON.parse(localStorage.getItem("vpsm-viewMode") || "null") as ViewMode | null) ??
 			// show grid view on mobile if there are less than 200 systems (looks better but table is more efficient)
 			(window.innerWidth < 1024 && filteredData.length < 200 ? "grid" : "table")
 	)

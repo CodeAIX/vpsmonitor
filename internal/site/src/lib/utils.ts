@@ -242,7 +242,7 @@ function getStorageValue(key: string, defaultValue: unknown, storageInterface: S
 
 /** Hook to sync value in local or session storage */
 export function useBrowserStorage<T>(key: string, defaultValue: T, storageInterface: Storage = localStorage) {
-	key = `besz-${key}`
+	key = `vpsm-${key}`
 	const [value, setValue] = useState<T>(() => {
 		return getStorageValue(key, defaultValue, storageInterface)
 	})

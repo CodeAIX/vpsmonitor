@@ -174,28 +174,7 @@ export default function SettingsProfilePage({ userSettings }: { userSettings: Us
 						</p>
 					</div>
 					<div className="grid sm:grid-cols-3 gap-4">
-						<div className="grid gap-2">
-							<Label className="block" htmlFor="unitTemp">
-								<Trans>Temperature unit</Trans>
-							</Label>
-							<Select
-								name="unitTemp"
-								key={userSettings.unitTemp}
-								defaultValue={userSettings.unitTemp?.toString() || String(Unit.Celsius)}
-							>
-								<SelectTrigger id="unitTemp">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value={String(Unit.Celsius)}>
-										<Trans>Celsius (°C)</Trans>
-									</SelectItem>
-									<SelectItem value={String(Unit.Fahrenheit)}>
-										<Trans>Fahrenheit (°F)</Trans>
-									</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
+
 						<div className="grid gap-2">
 							<Label className="block" htmlFor="unitNet">
 								<Trans comment="Context: Bytes or bits">Network unit</Trans>

@@ -110,7 +110,7 @@ func newSystemdManager() (*systemdManager, error) {
 
 	conn, err := dbus.NewSystemConnectionContext(context.Background())
 	if err != nil {
-		slog.Debug("Error connecting to systemd", "err", err, "ref", "https://vpsmonitor.dev/guide/systemd")
+		slog.Debug("Error connecting to systemd", "err", err, "ref", "https://github.com/CodeAIX/vpsmonitor")
 		return nil, err
 	}
 

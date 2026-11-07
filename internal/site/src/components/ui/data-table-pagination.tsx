@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { atom } from "nanostores"
 
 const defaultPageSizes = [10, 15, 20, 30, 40, 50, 100, 200]
-const pageSizeKey = "besz-pageSize"
+const pageSizeKey = "vpsm-pageSize"
 
 // The page size is stored per device in localStorage rather than in user settings by design.
 // The right number of rows depends on screen size (e.g. 20 on desktop, 10 on a phone), so

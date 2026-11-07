@@ -390,7 +390,7 @@ export function UserAuthForm({
 								<Trans>
 									Please see{" "}
 									<a
-										href="https://vpsmonitor.dev/guide/oauth"
+										href="https://github.com/CodeAIX/vpsmonitor/blob/main/docs/DEPLOY.md"
 										className={cn(buttonVariants({ variant: "link" }), "p-0 h-auto")}
 									>
 										the documentation

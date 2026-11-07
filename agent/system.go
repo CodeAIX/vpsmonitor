@@ -11,10 +11,8 @@ import (
 	"strings"
 
 	"github.com/CodeAIX/vpsmonitor"
-	"github.com/CodeAIX/vpsmonitor/agent/battery"
 	"github.com/CodeAIX/vpsmonitor/agent/btrfs"
 	"github.com/CodeAIX/vpsmonitor/agent/utils"
-	"github.com/CodeAIX/vpsmonitor/agent/wifi"
 	"github.com/CodeAIX/vpsmonitor/agent/zfs"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/container"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/system"
@@ -28,6 +26,7 @@ import (
 // Sets initial / non-changing values about the host system
 func (a *Agent) refreshSystemDetails() {
 	a.systemInfo.AgentVersion = vpsmonitor.Version
+	a.systemInfo.ProductVersion = vpsmonitor.BuildVersion
 
 	// get host info from Docker if available
 	var hostInfo container.HostInfo
@@ -150,17 +149,6 @@ func (a *Agent) updateSystemDetails(updateFunc func(details *system.Details)) {
 func (a *Agent) getSystemStats(cacheTimeMs uint16) system.Stats {
 	var systemStats system.Stats
 
-	// battery
-	if batteries, err := battery.GetBatteryStats(); err == nil {
-		systemStats.Batteries = make(map[string]uint8, len(batteries))
-		for _, device := range batteries {
-			systemStats.Batteries[device.Name] = device.Percent
-		}
-		if primary, ok := battery.Primary(batteries); ok {
-			systemStats.Battery = [2]uint8{primary.Percent, primary.State}
-		}
-	}
-
 	// cpu metrics
 	cpuMetrics, err := getCpuMetrics(cacheTimeMs, a.forceUseCgroup)
 	if err == nil {
@@ -216,10 +204,8 @@ func (a *Agent) getSystemStats(cacheTimeMs uint16) system.Stats {
 
 	// temperatures
 	// TODO: maybe refactor to methods on systemStats
-	a.updateTemperatures(&systemStats)
 
 	// fan speeds (Linux-only; sysfs hwmon)
-	a.updateFans(&systemStats)
 
 	// GPU data
 	if a.gpuManager != nil {
@@ -253,14 +239,6 @@ func (a *Agent) getSystemStats(cacheTimeMs uint16) system.Stats {
 			}
 		}
 	}
-
-	// Wi-Fi collection spawns a process on macOS and dumps the BSS cache on
-	// Linux, so only refresh on the default interval. Real-time requests reuse
-	// the last snapshot.
-	if cacheTimeMs == defaultDataCacheTimeMs {
-		a.systemInfo.WiFi = wifi.Collect()
-	}
-	systemStats.WiFi = wifi.Signals(a.systemInfo.WiFi)
 
 	// update system info
 	a.systemInfo.Cpu = systemStats.Cpu

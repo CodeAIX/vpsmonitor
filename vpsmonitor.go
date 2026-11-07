@@ -5,7 +5,8 @@ package vpsmonitor
 import "github.com/blang/semver"
 
 const (
-	// Version is the current version of the application.
+	// Version is the inherited internal capability baseline, not the product release.
+	// Product releases use BuildVersion and do not follow the former upstream.
 	Version = "0.21.1"
 	// AppName is the name of the application.
 	AppName = "vpsmonitor"

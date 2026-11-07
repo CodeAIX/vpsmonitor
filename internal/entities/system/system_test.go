@@ -5,10 +5,10 @@ import (
 	jsonv2 "encoding/json/v2"
 	"testing"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/container"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/smart"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/zfs"
+	"github.com/fxamacker/cbor/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

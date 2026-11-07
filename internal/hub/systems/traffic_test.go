@@ -17,7 +17,7 @@ import (
 
 func trafficTestSnapshot() *traffic.Snapshot {
 	now := time.Now().UTC().Add(-2 * time.Minute)
-	s := &traffic.Snapshot{SchemaVersion: 1, Status: traffic.OK, ObservedAt: now.Unix(), Timebase: "utc", UTCValidFromDay: now.AddDate(0, 0, -60).Format(time.DateOnly), RefreshSeconds: 300, SaveIntervalSeconds: 300, VNStatVersion: "2.13"}
+	s := &traffic.Snapshot{SchemaVersion: 1, Status: traffic.OK, ObservedAt: now.Unix(), Timebase: "utc", UTCValidFromDay: now.AddDate(0, 0, -60).Format(time.DateOnly), RefreshSeconds: 300, SaveIntervalSeconds: 300, CollectorVersion: "2.13"}
 	iface := traffic.InterfaceDaily{Name: "eth0", SourceCreatedAt: now.AddDate(0, 0, -60).Unix(), SourceUpdatedAt: now.Unix()}
 	for day := 29; day >= 0; day-- {
 		iface.Days = append(iface.Days, traffic.DailyBucket{Day: now.AddDate(0, 0, -day).Format(time.DateOnly), RxBytes: 100, TxBytes: 200})

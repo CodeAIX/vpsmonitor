@@ -139,7 +139,7 @@ func (acr *agentConnectRequest) verifyWsConn(conn *gws.Conn, fpRecords []ws.Fing
 // validateAgentHeaders extracts and validates the token and agent version from HTTP headers.
 func (acr *agentConnectRequest) validateAgentHeaders(headers http.Header) (string, string, error) {
 	token := headers.Get("X-Token")
-	agentVersion := headers.Get("X-vpsmonitor")
+	agentVersion := headers.Get("X-Vpsmonitor")
 
 	if agentVersion == "" || token == "" || len(token) > 64 {
 		return "", "", errors.New("")

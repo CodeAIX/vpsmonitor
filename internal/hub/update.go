@@ -14,9 +14,9 @@ import (
 func Update(cmd *cobra.Command, _ []string) {
 	dataDir := os.TempDir()
 
-	// set dataDir to ./beszel_data if it exists
-	if _, err := os.Stat("./beszel_data"); err == nil {
-		dataDir = "./beszel_data"
+	// set dataDir to ./vpsmonitor_data if it exists
+	if _, err := os.Stat("./vpsmonitor_data"); err == nil {
+		dataDir = "./vpsmonitor_data"
 	}
 
 	// Check if china-mirrors flag is set

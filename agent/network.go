@@ -9,7 +9,9 @@ import (
 
 	"github.com/CodeAIX/vpsmonitor/agent/deltatracker"
 	"github.com/CodeAIX/vpsmonitor/agent/utils"
+	"github.com/CodeAIX/vpsmonitor/internal/accounting"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/system"
+	"github.com/CodeAIX/vpsmonitor/internal/entities/traffic"
 	psutilNet "github.com/shirou/gopsutil/v4/net"
 )
 
@@ -163,8 +165,17 @@ func (a *Agent) sumAndTrackPerNicDeltas(cacheTimeMs uint16, msElapsed uint64, ne
 		a.netInterfaceDeltaTrackers[cacheTimeMs] = tracker
 	}
 	tracker.Cycle()
+	selected := ""
+	if a.trafficCollector != nil {
+		if snapshot := a.trafficCollector.current.Load(); snapshot != nil && snapshot.Status == traffic.OK && len(snapshot.Interfaces) == 1 {
+			selected = snapshot.Interfaces[0].Name
+		}
+	}
 
 	for _, v := range netIO {
+		if selected != "" && v.Name != selected {
+			continue
+		}
 		useMacCounters, exists := a.netInterfaces[v.Name]
 		if !exists {
 			continue
@@ -244,17 +255,5 @@ func skipNetworkInterface(v psutilNet.IOCountersStat, nicCfg *NicConfig) bool {
 		// In blacklist mode, still apply the auto-filter below.
 	}
 
-	switch {
-	case strings.HasPrefix(v.Name, "lo"),
-		strings.HasPrefix(v.Name, "docker"),
-		strings.HasPrefix(v.Name, "br-"),
-		strings.HasPrefix(v.Name, "veth"),
-		strings.HasPrefix(v.Name, "bond"),
-		strings.HasPrefix(v.Name, "cali"),
-		v.BytesRecv == 0,
-		v.BytesSent == 0:
-		return true
-	default:
-		return false
-	}
+	return v.Name == "lo0" || accounting.Excluded(v.Name)
 }

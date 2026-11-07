@@ -11,6 +11,14 @@ export function trafficStatusLabel(status: string) {
 			return t`Choose an interface`
 		case "disabled":
 			return t`Disabled`
+		case "interface_required":
+			return t`Select the host uplink interface`
+		case "host_network_required":
+			return t`Agent requires host networking`
+		case "clock_error":
+			return t`Host clock moved backwards`
+		case "storage_error":
+			return t`Traffic storage needs attention`
 		case "vnstat_missing":
 			return t`vnStat not installed`
 		case "unsupported_timebase":

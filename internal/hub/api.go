@@ -13,7 +13,6 @@ import (
 	"time"
 	"uuid"
 
-	"github.com/blang/semver"
 	"github.com/CodeAIX/vpsmonitor"
 	"github.com/CodeAIX/vpsmonitor/internal/alerts"
 	systementity "github.com/CodeAIX/vpsmonitor/internal/entities/system"
@@ -21,6 +20,7 @@ import (
 	"github.com/CodeAIX/vpsmonitor/internal/hub/config"
 	"github.com/CodeAIX/vpsmonitor/internal/hub/systems"
 	"github.com/CodeAIX/vpsmonitor/internal/hub/utils"
+	"github.com/blang/semver"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -228,15 +228,15 @@ func (h *Hub) registerApiRoutes(se *core.ServeEvent) error {
 // getInfo returns data needed by authenticated users, such as the public key and current version
 func (h *Hub) getInfo(e *core.RequestEvent) error {
 	type infoResponse struct {
-		Key         string `json:"key"`
-		Version     string `json:"v"`
-		CheckUpdate bool   `json:"cu"`
+		Key          string `json:"key"`
+		Version      string `json:"v"`
+		CheckUpdate  bool   `json:"cu"`
 		BuildVersion string `json:"product_version"`
 		BuildCommit  string `json:"product_commit"`
 	}
 	info := infoResponse{
-		Key:         h.pubKey,
-		Version:     vpsmonitor.Version,
+		Key:          h.pubKey,
+		Version:      vpsmonitor.Version,
 		BuildVersion: vpsmonitor.BuildVersion,
 		BuildCommit:  vpsmonitor.BuildCommit,
 	}

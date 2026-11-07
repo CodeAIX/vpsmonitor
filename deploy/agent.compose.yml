@@ -1,0 +1,24 @@
+name: vpsmonitor-agent
+services:
+  agent:
+    image: vpsmonitor-agent:dev
+    build:
+      context: ..
+      dockerfile: Dockerfile.agent
+      args:
+        VERSION: ${VERSION:-0.1.0-dev}
+        COMMIT: ${COMMIT:-unknown}
+    restart: unless-stopped
+    network_mode: host
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      KEY: ${KEY:?Set the Hub public key}
+      TOKEN: ${TOKEN:?Set the Agent or universal registration token}
+      HUB_URL: ${HUB_URL:?Set the reachable Hub URL}
+      DISABLE_SSH: "true"
+      VPSMONITOR_NETWORK_SCOPE: host
+      VPSMONITOR_TRAFFIC_INTERFACE: ${TRAFFIC_INTERFACE:-auto}
+    volumes:
+      - ./agent_data:/var/lib/vpsmonitor-agent
+      - /var/run/docker.sock:/var/run/docker.sock:ro

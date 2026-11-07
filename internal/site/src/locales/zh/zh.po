@@ -19,6 +19,7 @@ msgstr ""
 "X-Crowdin-File-ID: 32\n"
 
 #: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "(end exclusive, UTC)"
 msgstr "（不含结束日，UTC）"
 
@@ -192,6 +193,14 @@ msgstr "新增系統"
 msgid "Add URL"
 msgstr "新增 URL"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Add with existing token"
+msgstr "新增，沿用原 Token"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Add; a new token will be generated and must be configured on the agent"
+msgstr "新增；將生成新 Token，需在 Agent 中配置"
+
 #: src/components/routes/settings/general.tsx
 msgid "Adjust display options for charts."
 msgstr "調整圖表的顯示選項。"
@@ -217,6 +226,18 @@ msgstr "設定環境變數後，請重新啟動 vpsmonitor Hub 以使變更生�
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Agent"
 msgstr "代理程式"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Agent disconnected; showing the last synced cache."
+msgstr "Agent 已离线，顯示最後同步的缓存。"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Agent offline cache: 7 days, one sample per minute."
+msgstr "Agent 离线缓存：7 天，每分钟采樣。"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Agent requires host networking"
+msgstr "Agent 需要宿主网络模式"
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -246,6 +267,14 @@ msgstr "所有容器"
 msgid "All Systems"
 msgstr "所有系統"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Already listed; keep existing settings and token"
+msgstr "已存在，保留現有設置與 Token"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Apply imported traffic settings to existing systems"
+msgstr "將文件中的流量設置應用到已有系統"
+
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Are you sure you want to delete {name}?"
 msgstr "您確定要刪除 {name} 嗎？"
@@ -268,6 +297,10 @@ msgstr "可用"
 msgctxt "Disk space available"
 msgid "Available"
 msgstr "可用"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Available since"
+msgstr "可回溯至"
 
 #: src/components/routes/system/chart-card.tsx
 msgid "Average"
@@ -364,13 +397,9 @@ msgstr "之前"
 msgid "Below {0}{1} in last {2, plural, one {# minute} other {# minutes}}"
 msgstr "在過去的{2, plural, one {# 分鐘} other {# 分鐘}}中低於{0}{1}"
 
-#: src/components/login/auth-form.tsx
-msgid "vpsmonitor supports OpenID Connect and many OAuth2 authentication providers."
-msgstr "vpsmonitor 支援 OpenID Connect 和許多 OAuth2 認證提供者。"
-
-#: src/components/routes/settings/notifications.tsx
-msgid "vpsmonitor uses <0>Shoutrrr</0> to integrate with popular notification services."
-msgstr "vpsmonitor 以 <0>Shoutrrr</0> 整合常用的通知服務。"
+#: src/components/routes/settings/import-systems.tsx
+msgid "Billing day"
+msgstr "账单起始日"
 
 #: src/components/traffic/traffic-settings-dialog.tsx
 msgid "Billing day (UTC)"
@@ -385,12 +414,12 @@ msgid "Billing period"
 msgstr "账单周期"
 
 #: src/components/systems-table/systems-table-columns.tsx
-msgid "Billing traffic"
-msgstr "本期流量"
+#~ msgid "Billing traffic"
+#~ msgstr "本期流量"
 
 #: src/components/add-system.tsx
-msgid "Binary"
-msgstr "執行檔"
+#~ msgid "Binary"
+#~ msgstr "執行檔"
 
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/general.tsx
@@ -410,6 +439,10 @@ msgstr "批次新增"
 msgid "Bulk Add {foo}"
 msgstr "批次新增{foo}"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "By default, new systems belong to the current administrator. Email matching requires every listed user to exist in this Hub."
+msgstr "預設將新增系統歸屬當前管理员。按郵箱匹配時，原用戶必須已在當前面板中存在。"
+
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/general.tsx
 msgid "Bytes (KB/s, MB/s, GB/s)"
@@ -418,6 +451,14 @@ msgstr "位元組 (KB/s, MB/s, GB/s)"
 #: src/components/routes/system/charts/memory-charts.tsx
 msgid "Cache / Buffers"
 msgstr "快取/緩衝"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Cached history could not be loaded. Live monitoring remains available."
+msgstr "缓存歷史加載失敗，實時監控仍可使用。"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Cached samples synced."
+msgstr "缓存數据已同步。"
 
 #: src/components/routes/system/traffic-panel.tsx
 msgid "Calendar month"
@@ -456,8 +497,8 @@ msgid "Caution - potential data loss"
 msgstr "注意 - 可能遺失資料"
 
 #: src/components/routes/settings/general.tsx
-msgid "Celsius (°C)"
-msgstr "攝氏 (°C)"
+#~ msgid "Celsius (°C)"
+#~ msgstr "攝氏 (°C)"
 
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 #: src/components/network-monitors-table/network-monitors-columns.tsx
@@ -535,6 +576,10 @@ msgstr "已於 {0} 檢查"
 msgid "Checksum errors"
 msgstr "校驗和錯誤"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Choose a YAML export (up to 1 MiB)"
+msgstr "選择 YAML 導出文件（最大 1 MiB）"
+
 #: src/components/traffic/traffic-settings-dialog.tsx
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Choose an interface"
@@ -611,6 +656,10 @@ msgstr "設定您要如何接收警報通知"
 msgid "Configure response monitoring from this agent."
 msgstr "從此 Agent 設定回應監控。"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Confirm import"
+msgstr "確認匯入"
+
 #: src/components/login/auth-form.tsx
 #: src/components/login/auth-form.tsx
 msgid "Confirm password"
@@ -676,10 +725,9 @@ msgstr "複製自"
 msgid "Copy host"
 msgstr "複製主機"
 
-#: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "Copy Linux command"
-msgstr "複製 Linux 指令"
+#~ msgid "Copy Linux command"
+#~ msgstr "複製 Linux 指令"
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy name"
@@ -694,8 +742,8 @@ msgid "Copy text"
 msgstr "複製文字"
 
 #: src/components/add-system.tsx
-msgid "Copy the installation command for the agent below, or register agents automatically with a <0>universal token</0>."
-msgstr "以下方指令安裝 Agent ，或使用<0>通用 Token</0>進行自動註冊。"
+#~ msgid "Copy the installation command for the agent below, or register agents automatically with a <0>universal token</0>."
+#~ msgstr "以下方指令安裝 Agent ，或使用<0>通用 Token</0>進行自動註冊。"
 
 #: src/components/add-system.tsx
 msgid "Copy the<0>docker-compose.yml</0> content for the agent below, or register agents automatically with a <1>universal token</1>."
@@ -715,6 +763,7 @@ msgctxt "Core system metrics"
 msgid "Core"
 msgstr "核心指標"
 
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/traffic/traffic-settings-dialog.tsx
 msgid "Count mode"
 msgstr "计费方向"
@@ -806,6 +855,10 @@ msgstr "寫入總量"
 msgid "Current"
 msgstr "目前"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Current settings"
+msgstr "當前設置"
+
 #. Context: Battery state
 #. Context: Battery state
 #: src/components/routes/system/charts/sensor-charts.tsx
@@ -826,10 +879,6 @@ msgstr "每日"
 #: src/components/routes/system/traffic-panel.tsx
 msgid "Daily traffic (UTC)"
 msgstr "每日流量（UTC）"
-
-#: src/components/routes/system/traffic-panel.tsx
-msgid "Daily vnStat accounting · UTC"
-msgstr "vnStat 按日统计 · UTC"
 
 #: src/components/routes/system/traffic-panel.tsx
 msgid "days"
@@ -905,6 +954,10 @@ msgctxt "Layout display options"
 msgid "Display"
 msgstr "顯示"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Display unit"
+msgstr "顯示单位"
+
 #: src/components/traffic/traffic-settings-dialog.tsx
 msgid "Display units"
 msgstr "显示单位"
@@ -946,6 +999,10 @@ msgstr "離線 ({downSystemsLength})"
 msgid "Download"
 msgstr "下載"
 
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Download YAML"
+msgstr "下載 YAML"
+
 #: src/components/alerts-history-columns.tsx
 msgid "Duration"
 msgstr "持續時間"
@@ -979,6 +1036,10 @@ msgstr "電子郵件通知"
 #: src/lib/i18n.ts
 msgid "Empty"
 msgstr "空電"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Enabled"
+msgstr "啟用"
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -1071,16 +1132,21 @@ msgid "Export"
 msgstr "匯出"
 
 #: src/components/routes/settings/config-yaml.tsx
+#: src/components/routes/settings/config-yaml.tsx
 msgid "Export configuration"
 msgstr "匯出設定"
+
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Export traffic settings only"
+msgstr "僅導出流量設置"
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "Export your current systems configuration."
 msgstr "匯出您現在的系統設定。"
 
 #: src/components/routes/settings/general.tsx
-msgid "Fahrenheit (°F)"
-msgstr "華氏 (°F)"
+#~ msgid "Fahrenheit (°F)"
+#~ msgstr "華氏 (°F)"
 
 #: src/components/routes/system/smart-table.tsx
 msgid "Failed Attributes:"
@@ -1173,11 +1239,10 @@ msgctxt "Free space"
 msgid "Free"
 msgstr "可用空間"
 
-#: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgctxt "Button to copy install command"
-msgid "FreeBSD command"
-msgstr "FreeBSD 指令"
+#~ msgctxt "Button to copy install command"
+#~ msgid "FreeBSD command"
+#~ msgstr "FreeBSD 指令"
 
 #. Context: Battery state
 #: src/components/routes/system/info-bar.tsx
@@ -1247,15 +1312,19 @@ msgstr "隱藏時間戳記"
 msgid "Hide token"
 msgstr "隱藏權杖"
 
-#: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgctxt "Button to copy install command"
-msgid "Homebrew command"
-msgstr "Homebrew 指令"
+#~ msgctxt "Button to copy install command"
+#~ msgid "Homebrew command"
+#~ msgstr "Homebrew 指令"
 
 #: src/components/add-system.tsx
+#: src/components/routes/settings/import-systems.tsx
 msgid "Host / IP"
 msgstr "主機 / IP"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Host clock moved backwards"
+msgstr "宿主机时钟回退"
 
 #: src/components/routes/settings/heartbeat.tsx
 msgid "HTTP Method"
@@ -1304,9 +1373,60 @@ msgctxt "Docker image"
 msgid "Image update available"
 msgstr "有可用的映像檔更新"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Import an original vpsmonitor or vpsmonitor YAML export. Add systems in one batch, or restore traffic settings to matching systems."
+msgstr "匯入原版 vpsmonitor 或 vpsmonitor 導出的 YAML，批量新增系統，或為匹配的系統恢复流量設置。"
+
+#: src/components/routes/settings/import-systems.tsx
+#~ msgid "Import an original vpsmonitor YAML export. New systems are added in one batch; existing addresses are skipped and keep their settings, tokens and history."
+#~ msgstr "匯入原版 vpsmonitor 導出的 YAML，批量添加已有系統。已存在的地址会跳過，并保留原有設置、Token 和歷史數据。"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Import existing systems"
+msgstr "匯入已有系統"
+
+#: src/components/add-system.tsx
+msgid "Import existing systems from YAML"
+msgstr "从 YAML 匯入已有系統"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Import failed. No systems were imported. Check your connection and administrator access, then preview again."
+msgstr "匯入失敗，未匯入任何系統。請檢查連接和管理员權限後重新預覽。"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Imported"
+msgstr "已匯入"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Imported settings"
+msgstr "匯入設置"
+
+#: src/components/routes/settings/import-systems.tsx
+#~ msgid "Imported: {0}. Skipped: {1}."
+#~ msgstr "已匯入：{0}。已跳過：{1}。"
+
+#. placeholder {0}: plan.created
+#. placeholder {1}: plan.updated
+#. placeholder {2}: plan.skip
+#: src/components/routes/settings/import-systems.tsx
+msgid "Imported: {0}. Traffic updated: {1}. Skipped: {2}."
+msgstr "新增系統：{0}。更新流量設置：{1}。跳過：{2}。"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Importing adds connection settings, not monitoring history or the Hub key. Existing agents must trust this Hub's public key; WebSocket agents must also use this Hub's URL. Reinstalling the agent is unnecessary."
+msgstr "匯入僅添加連接配置，不含監控歷史和 Hub 密鑰。已有 Agent 需信任當前 Hub 公鑰；WebSocket 連接还需使用當前 Hub 地址，無需重新安装 Agent。"
+
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Inactive"
 msgstr "未啟用"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Inbound + outbound"
+msgstr "入站 + 出站"
+
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Include traffic settings in system configuration"
+msgstr "系統配置中包含流量設置"
 
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Incomplete period"
@@ -1315,6 +1435,10 @@ msgstr "周期数据不完整"
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Initializing"
 msgstr "正在初始化"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Interface"
+msgstr "網络接口"
 
 #: src/components/routes/system/traffic-panel.tsx
 msgid "Interface counters may differ from the provider's bill."
@@ -1334,11 +1458,33 @@ msgstr "間隔 (秒)"
 msgid "Invalid email address."
 msgstr "無效的電子郵件地址。"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Invalid name or host"
+msgstr "名称或主機地址無效"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Invalid token (9–255 characters required)"
+msgstr "Token 無效（需為 9–255 個字符）"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Invalid traffic settings"
+msgstr "流量設置無效"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Invalid YAML. Use an original vpsmonitor export with 1–1000 systems, at most 1 MiB. Check names, hosts, ports, tokens and users."
+msgstr "YAML 無效。請使用原版 vpsmonitor 導出格式，包含 1–1000 個系統，且不超過 1 MiB。請檢查名称、主機地址、端口、Token 和用戶字段。"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Keep current traffic settings; enable traffic updates to apply this row"
+msgstr "保留當前流量設置；勾選應用流量設置後才会更新"
+
 #: src/components/routes/settings/general.tsx
 msgid "Language"
 msgstr "語言"
 
+#: src/components/routes/system/history-status.tsx
 #: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "Last sync"
 msgstr "最近同步"
 
@@ -1394,6 +1540,7 @@ msgid "Loading..."
 msgstr "載入中..."
 
 #: src/components/traffic/traffic-usage-cell.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "Loading…"
 msgstr ""
 
@@ -1445,7 +1592,10 @@ msgstr "主要"
 msgid "Manage display and notification preferences."
 msgstr "管理顯示和通知偏好。"
 
-#: src/components/add-system.tsx
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Manage systems with config.yml (advanced)"
+msgstr "使用 config.yml 管理系統（進階）"
+
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "手動設定說明"
@@ -1515,6 +1665,10 @@ msgstr "監控"
 msgid "Monitors created"
 msgstr "已建立監控"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "More than one existing system uses this address"
+msgstr "多個已有系統使用此地址，無法唯一匹配"
+
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Mountpoint"
 msgstr "掛載點"
@@ -1522,10 +1676,15 @@ msgstr "掛載點"
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Name"
 msgstr "名稱"
+
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Native host traffic accounting · UTC"
+msgstr "宿主网卡原生计量 · UTC"
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -1571,6 +1730,19 @@ msgstr "公開介面的網路流量"
 msgid "Network unit"
 msgstr "網路單位"
 
+#: src/components/routes/settings/import-systems.tsx
+#~ msgid "New: {0}. Skipped: {1}. Errors: {2}."
+#~ msgstr "新增：{0}。跳過：{1}。錯誤：{2}。"
+
+#. placeholder {0}: plan.add
+#. placeholder {1}: plan.update
+#. placeholder {2}: plan.skip
+#. placeholder {3}: plan.errors
+#: src/components/routes/settings/import-systems.tsx
+msgid "New: {0}. Traffic updates: {1}. Skipped: {2}. Errors: {3}."
+msgstr "新增系統：{0}。更新流量設置：{1}。跳過：{2}。錯誤：{3}。"
+
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1593,11 +1765,16 @@ msgstr "尚未选择网卡"
 msgid "No logs found."
 msgstr "找不到系統記錄。"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "No matching system; traffic-only import cannot create systems"
+msgstr "没有匹配的系統；僅流量文件不会新增系統"
+
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "No monitored interfaces"
 msgstr "没有已监测网卡"
 
 #: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "No quota"
 msgstr "未设置配额"
 
@@ -1653,6 +1830,10 @@ msgstr "支援 OAuth 2 / OIDC"
 msgid "Offline · last known"
 msgstr "离线 · 显示最后记录"
 
+#: src/components/routes/system/history-status.tsx
+msgid "Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache."
+msgstr "當前 Agent 未啟用离线缓存。請使用新版 Plus Agent，以保留最近 7 天的本地樣本。"
+
 #: src/components/routes/settings/config-yaml.tsx
 msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
 msgstr "每次重新啟動時，將會以檔案中的系統定義更新資料庫。"
@@ -1702,14 +1883,20 @@ msgstr "選填。預設為 Agent 的系統解析器。"
 msgid "Or continue with"
 msgstr "或繼續使用"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Or paste YAML"
+msgstr "或粘贴 YAML"
+
 #. Package version
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/package-updates-table.tsx
 msgid "Other"
 msgstr "其他"
 
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/routes/system/traffic-panel.tsx
 #: src/components/traffic/traffic-settings-dialog.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Outbound only"
 msgstr "仅出站流量"
@@ -1885,6 +2072,14 @@ msgstr "紀錄時間內的精確使用量"
 msgid "Preferred Language"
 msgstr "首選語言"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Preserve original user assignments by email"
+msgstr "按郵箱保留原有用戶分配"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Preview import"
+msgstr "預覽匯入"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "進程啟動"
@@ -1914,6 +2109,7 @@ msgstr "隊列深度"
 msgid "Quiet Hours"
 msgstr "靜音時段"
 
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/traffic/traffic-settings-dialog.tsx
 msgid "Quota"
 msgstr "配额"
@@ -1950,11 +2146,13 @@ msgstr "讀取錯誤"
 
 #: src/components/routes/system/charts/network-charts.tsx
 #: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "Received"
 msgstr "接收"
 
 #: src/components/routes/system/traffic-panel.tsx
 #: src/components/traffic/traffic-settings-dialog.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Received + sent"
 msgstr "接收与发送合计"
@@ -1975,6 +2173,10 @@ msgstr "刷新流量"
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Relationships"
 msgstr "關係"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Repeated address with traffic settings; remove the duplicate row"
+msgstr "含流量設置的地址重复，請移除重复行"
 
 #: src/components/login/login.tsx
 msgid "Request a one-time password"
@@ -2030,6 +2232,10 @@ msgstr ""
 #: src/components/token-value.tsx
 msgid "Reveal token"
 msgstr "顯示權杖"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Review traffic settings"
+msgstr "查看流量設置變更"
 
 #. Package version
 #: src/components/routes/system/package-updates-table.tsx
@@ -2167,6 +2373,10 @@ msgstr "選取系統"
 msgid "Select targets"
 msgstr "選擇目標"
 
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Select the host uplink interface"
+msgstr "请选择宿主机出口网卡"
+
 #: src/components/routes/settings/heartbeat.tsx
 msgid "Send a single heartbeat ping to verify your endpoint is working."
 msgstr "發送單次 Heartbeat Ping 以驗證您的 Endpoint 是否運作正常。"
@@ -2181,6 +2391,7 @@ msgstr "發送測試 Heartbeat"
 
 #: src/components/routes/system/charts/network-charts.tsx
 #: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "Sent"
 msgstr "傳送"
 
@@ -2243,6 +2454,10 @@ msgstr "已連線 Wi-Fi 介面的訊號強度"
 msgid "SMTP settings"
 msgstr "SMTP 設定"
 
+#: src/components/routes/system/history-status.tsx
+msgid "Some history is unavailable because of a cache limit, storage error or an expired retention window. Missing samples are not treated as zero."
+msgstr "部分歷史因容量限制、存儲異常或超出保留期而不可用，缺失樣本不会按零值處理。"
+
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"
@@ -2266,6 +2481,7 @@ msgid "State"
 msgstr "狀態"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/routes/system/smart-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -2293,6 +2509,10 @@ msgstr "交換空間使用量"
 #: src/components/mode-toggle.tsx
 msgid "Switch theme"
 msgstr "切換主題"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Syncing cached samples…"
+msgstr "正在補传缓存數据…"
 
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
@@ -2368,8 +2588,8 @@ msgid "Temperature"
 msgstr "溫度"
 
 #: src/components/routes/settings/general.tsx
-msgid "Temperature unit"
-msgstr "溫度單位"
+#~ msgid "Temperature unit"
+#~ msgstr "溫度單位"
 
 #: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Temperatures of system sensors"
@@ -2387,6 +2607,14 @@ msgstr "測試 Heartbeat"
 msgid "Test notification sent"
 msgstr "已發送測試通知"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "The file exceeds 1 MiB."
+msgstr "文件超過 1 MiB。"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "The import preview changed. Review the new preview before confirming again."
+msgstr "匯入預覽已變化，請核對新的預覽後再次確認。"
+
 #: src/components/routes/settings/heartbeat.tsx
 msgid "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
 msgstr "當所有系統都正常運行時，整體狀態為 <0>正常</0>；當觸發警報時為 <1>警告</1>；當任何系統故障時為 <2>錯誤</2>。"
@@ -2402,6 +2630,10 @@ msgstr "此账号只能查看设置，无法修改。"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "This action cannot be undone. This will permanently delete all current records for {name} from the database."
 msgstr "此操作無法復原。這將永久刪除資料庫中{name}的所有當前記錄。"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "This Hub uses config.yml startup sync. Remove or migrate that file before importing; otherwise the next restart could delete imported systems."
+msgstr "當前 Hub 使用 config.yml 啟动同步。請先移除或迁移该文件，否则下次重啟可能刪除匯入的系統。"
 
 #: src/components/traffic/traffic-settings-dialog.tsx
 msgid "This virtual interface may count traffic already recorded by the public interface."
@@ -2446,6 +2678,10 @@ msgstr "{0} 的權杖"
 msgid "Token hidden"
 msgstr "權杖已隱藏"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Token is already assigned to another address"
+msgstr "Token 已被另一個地址使用"
+
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
@@ -2488,6 +2724,8 @@ msgstr "總計：{0}"
 #: src/components/routes/system.tsx
 #: src/components/routes/system/traffic-panel.tsx
 #: src/components/routes/system/traffic-panel.tsx
+#: src/components/systems-table/systems-table-columns.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "Traffic"
 msgstr "流量"
 
@@ -2495,6 +2733,7 @@ msgstr "流量"
 msgid "Traffic not enabled"
 msgstr "未启用流量采集"
 
+#: src/components/traffic/traffic-usage-cell.tsx
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Traffic quota usage"
 msgstr "流量配额使用率"
@@ -2504,7 +2743,16 @@ msgstr "流量配额使用率"
 msgid "Traffic settings"
 msgstr "流量设置"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Traffic settings already match"
+msgstr "流量設置相同，無需更新"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Traffic storage needs attention"
+msgstr "流量账本存储异常"
+
 #: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Traffic unavailable"
 msgstr "流量数据暂不可用"
@@ -2592,6 +2840,10 @@ msgstr "當任何磁碟使用率超過閾值時觸發"
 msgid "Type"
 msgstr "類型"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Unable to read the selected file."
+msgstr "無法讀取所選文件。"
+
 #: src/components/routes/system/traffic-panel.tsx
 msgid "Unable to refresh. Showing last known data."
 msgstr "刷新失败，正在显示最后已知的数据。"
@@ -2662,6 +2914,10 @@ msgstr "更新"
 msgid "Update failed"
 msgstr "更新失败"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Update traffic settings only; keep connection and history"
+msgstr "僅更新流量設置，保留連接配置與歷史數据"
+
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 #: src/components/network-monitors-table/network-monitors-columns.tsx
@@ -2679,6 +2935,10 @@ msgstr "每 10 分鐘更新一次。"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Updates"
 msgstr "更新"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Updates interface, quota, billing mode and period, display unit and enabled state. Connection settings, collector status and historical counters are preserved. Traffic-only files never create systems."
+msgstr "更新接口、配额、计费模式與周期、顯示单位和啟用状态。保留連接配置、采集状态及歷史计數。僅流量文件不会新增系統。"
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Upload"
@@ -2714,6 +2974,10 @@ msgstr "用於自簽憑證。"
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Used"
 msgstr "已使用"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "User email not found; disable original user mapping or create the user first"
+msgstr "找不到原用戶郵箱，請關閉原用戶分配或先创建该用戶"
 
 #: src/components/command-palette.tsx
 #: src/components/navbar.tsx
@@ -2782,10 +3046,22 @@ msgstr "vnStat 读取权限不足"
 msgid "vnStat query timed out"
 msgstr "vnStat 查询超时"
 
+#: src/components/login/auth-form.tsx
+msgid "vpsmonitor supports OpenID Connect and many OAuth2 authentication providers."
+msgstr "vpsmonitor 支援 OpenID Connect 和許多 OAuth2 認證提供者。"
+
+#: src/components/routes/settings/notifications.tsx
+msgid "vpsmonitor uses <0>Shoutrrr</0> to integrate with popular notification services."
+msgstr "vpsmonitor 以 <0>Shoutrrr</0> 整合常用的通知服務。"
+
 #: src/components/charts/chart-no-values.tsx
 #: src/components/routes/system/chart-card.tsx
 msgid "Waiting for enough records to display"
 msgstr "等待足夠的記錄以顯示"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Waiting for the first persisted sample."
+msgstr "等待首個樣本保存到本地。"
 
 #: src/components/routes/settings/general.tsx
 msgid "Want to help improve our translations? Check <0>Crowdin</0> for details."
@@ -2819,11 +3095,10 @@ msgstr "使用 POST 時，每個 Heartbeat 都會包含一個 JSON Payload，內
 msgid "Wi-Fi signal"
 msgstr "Wi-Fi 訊號"
 
-#: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgctxt "Button to copy install command"
-msgid "Windows command"
-msgstr "Windows 指令"
+#~ msgctxt "Button to copy install command"
+#~ msgid "Windows command"
+#~ msgstr "Windows 指令"
 
 #. Disk write
 #. Disk write
@@ -2845,9 +3120,10 @@ msgid "YAML Config"
 msgstr "YAML 設定檔"
 
 #: src/components/routes/settings/config-yaml.tsx
-msgid "YAML Configuration"
-msgstr "YAML 設定檔"
+#~ msgid "YAML Configuration"
+#~ msgstr "YAML 設定檔"
 
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -2857,251 +3133,3 @@ msgstr "是"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "已更新您的使用者設定"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Add with existing token"
-msgstr "新增，沿用原 Token"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Add; a new token will be generated and must be configured on the agent"
-msgstr "新增；將生成新 Token，需在 Agent 中配置"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Already listed; keep existing settings and token"
-msgstr "已存在，保留現有設置與 Token"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "By default, new systems belong to the current administrator. Email matching requires every listed user to exist in this Hub."
-msgstr "預設將新增系統歸屬當前管理员。按郵箱匹配時，原用戶必須已在當前面板中存在。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Choose a YAML export (up to 1 MiB)"
-msgstr "選择 YAML 導出文件（最大 1 MiB）"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Confirm import"
-msgstr "確認匯入"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Import an original vpsmonitor YAML export. New systems are added in one batch; existing addresses are skipped and keep their settings, tokens and history."
-msgstr "匯入原版 vpsmonitor 導出的 YAML，批量添加已有系統。已存在的地址会跳過，并保留原有設置、Token 和歷史數据。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Import existing systems"
-msgstr "匯入已有系統"
-
-#: src/components/add-system.tsx
-msgid "Import existing systems from YAML"
-msgstr "从 YAML 匯入已有系統"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Import failed. No systems were imported. Check your connection and administrator access, then preview again."
-msgstr "匯入失敗，未匯入任何系統。請檢查連接和管理员權限後重新預覽。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Imported"
-msgstr "已匯入"
-
-#. placeholder {0}: plan.created
-#. placeholder {1}: plan.skip
-#: src/components/routes/settings/import-systems.tsx
-msgid "Imported: {0}. Skipped: {1}."
-msgstr "已匯入：{0}。已跳過：{1}。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Importing adds connection settings, not monitoring history or the Hub key. Existing agents must trust this Hub's public key; WebSocket agents must also use this Hub's URL. Reinstalling the agent is unnecessary."
-msgstr "匯入僅添加連接配置，不含監控歷史和 Hub 密鑰。已有 Agent 需信任當前 Hub 公鑰；WebSocket 連接还需使用當前 Hub 地址，無需重新安装 Agent。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Invalid name or host"
-msgstr "名称或主機地址無效"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Invalid token (9–255 characters required)"
-msgstr "Token 無效（需為 9–255 個字符）"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Invalid YAML. Use an original vpsmonitor export with 1–1000 systems, at most 1 MiB. Check names, hosts, ports, tokens and users."
-msgstr "YAML 無效。請使用原版 vpsmonitor 導出格式，包含 1–1000 個系統，且不超過 1 MiB。請檢查名称、主機地址、端口、Token 和用戶字段。"
-
-#. placeholder {0}: plan.add
-#. placeholder {1}: plan.skip
-#. placeholder {2}: plan.errors
-#: src/components/routes/settings/import-systems.tsx
-msgid "New: {0}. Skipped: {1}. Errors: {2}."
-msgstr "新增：{0}。跳過：{1}。錯誤：{2}。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Or paste YAML"
-msgstr "或粘贴 YAML"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Preserve original user assignments by email"
-msgstr "按郵箱保留原有用戶分配"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Preview import"
-msgstr "預覽匯入"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "The file exceeds 1 MiB."
-msgstr "文件超過 1 MiB。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "The import preview changed. Review the new preview before confirming again."
-msgstr "匯入預覽已變化，請核對新的預覽後再次確認。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "This Hub uses config.yml startup sync. Remove or migrate that file before importing; otherwise the next restart could delete imported systems."
-msgstr "當前 Hub 使用 config.yml 啟动同步。請先移除或迁移该文件，否则下次重啟可能刪除匯入的系統。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Token is already assigned to another address"
-msgstr "Token 已被另一個地址使用"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Unable to read the selected file."
-msgstr "無法讀取所選文件。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "User email not found; disable original user mapping or create the user first"
-msgstr "找不到原用戶郵箱，請關閉原用戶分配或先创建该用戶"
-
-#: src/components/routes/settings/config-yaml.tsx
-msgid "Manage systems with config.yml (advanced)"
-msgstr "使用 config.yml 管理系統（進階）"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Apply imported traffic settings to existing systems"
-msgstr "將文件中的流量設置應用到已有系統"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Billing day"
-msgstr "账单起始日"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Current settings"
-msgstr "當前設置"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Display unit"
-msgstr "顯示单位"
-
-#: src/components/routes/settings/config-yaml.tsx
-msgid "Download YAML"
-msgstr "下載 YAML"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Enabled"
-msgstr "啟用"
-
-#: src/components/routes/settings/config-yaml.tsx
-msgid "Export traffic settings only"
-msgstr "僅導出流量設置"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Import an original vpsmonitor or vpsmonitor YAML export. Add systems in one batch, or restore traffic settings to matching systems."
-msgstr "匯入原版 vpsmonitor 或 vpsmonitor 導出的 YAML，批量新增系統，或為匹配的系統恢复流量設置。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Imported settings"
-msgstr "匯入設置"
-
-#. placeholder {0}: plan.created
-#. placeholder {1}: plan.updated
-#. placeholder {2}: plan.skip
-#: src/components/routes/settings/import-systems.tsx
-msgid "Imported: {0}. Traffic updated: {1}. Skipped: {2}."
-msgstr "新增系統：{0}。更新流量設置：{1}。跳過：{2}。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Inbound + outbound"
-msgstr "入站 + 出站"
-
-#: src/components/routes/settings/config-yaml.tsx
-msgid "Include traffic settings in system configuration"
-msgstr "系統配置中包含流量設置"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Interface"
-msgstr "網络接口"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Invalid traffic settings"
-msgstr "流量設置無效"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Keep current traffic settings; enable traffic updates to apply this row"
-msgstr "保留當前流量設置；勾選應用流量設置後才会更新"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "More than one existing system uses this address"
-msgstr "多個已有系統使用此地址，無法唯一匹配"
-
-#. placeholder {0}: plan.add
-#. placeholder {1}: plan.update
-#. placeholder {2}: plan.skip
-#. placeholder {3}: plan.errors
-#: src/components/routes/settings/import-systems.tsx
-msgid "New: {0}. Traffic updates: {1}. Skipped: {2}. Errors: {3}."
-msgstr "新增系統：{0}。更新流量設置：{1}。跳過：{2}。錯誤：{3}。"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "No matching system; traffic-only import cannot create systems"
-msgstr "没有匹配的系統；僅流量文件不会新增系統"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Repeated address with traffic settings; remove the duplicate row"
-msgstr "含流量設置的地址重复，請移除重复行"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Review traffic settings"
-msgstr "查看流量設置變更"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Traffic settings already match"
-msgstr "流量設置相同，無需更新"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Update traffic settings only; keep connection and history"
-msgstr "僅更新流量設置，保留連接配置與歷史數据"
-
-#: src/components/routes/settings/import-systems.tsx
-msgid "Updates interface, quota, billing mode and period, display unit and enabled state. Connection settings, collector status and historical counters are preserved. Traffic-only files never create systems."
-msgstr "更新接口、配额、计费模式與周期、顯示单位和啟用状态。保留連接配置、采集状态及歷史计數。僅流量文件不会新增系統。"
-
-#: src/components/routes/system/history-status.tsx
-msgid "Agent disconnected; showing the last synced cache."
-msgstr "Agent 已离线，顯示最後同步的缓存。"
-
-#: src/components/routes/system/history-status.tsx
-msgid "Agent offline cache: 7 days, one sample per minute."
-msgstr "Agent 离线缓存：7 天，每分钟采樣。"
-
-#: src/components/routes/system/history-status.tsx
-msgid "Available since"
-msgstr "可回溯至"
-
-#: src/components/routes/system/history-status.tsx
-msgid "Cached history could not be loaded. Live monitoring remains available."
-msgstr "缓存歷史加載失敗，實時監控仍可使用。"
-
-#: src/components/routes/system/history-status.tsx
-msgid "Cached samples synced."
-msgstr "缓存數据已同步。"
-
-#: src/components/routes/system/history-status.tsx
-msgid "Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache."
-msgstr "當前 Agent 未啟用离线缓存。請使用新版 Plus Agent，以保留最近 7 天的本地樣本。"
-
-#: src/components/routes/system/history-status.tsx
-msgid "Some history is unavailable because of a cache limit, storage error or an expired retention window. Missing samples are not treated as zero."
-msgstr "部分歷史因容量限制、存儲異常或超出保留期而不可用，缺失樣本不会按零值處理。"
-
-#: src/components/routes/system/history-status.tsx
-msgid "Syncing cached samples…"
-msgstr "正在補传缓存數据…"
-
-#: src/components/routes/system/history-status.tsx
-msgid "Waiting for the first persisted sample."
-msgstr "等待首個樣本保存到本地。"

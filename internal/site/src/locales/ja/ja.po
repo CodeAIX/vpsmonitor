@@ -18,6 +18,11 @@ msgstr ""
 "X-Crowdin-File: /main/internal/site/src/locales/en/en.po\n"
 "X-Crowdin-File-ID: 32\n"
 
+#: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "(end exclusive, UTC)"
+msgstr ""
+
 #. placeholder {0}: newVersion.v
 #: src/components/footer-repo-link.tsx
 msgctxt "New version available"
@@ -96,6 +101,10 @@ msgstr "{totalCount, plural, one {# サービス} other {# サービス}}"
 #: src/components/alerts-history-columns.tsx
 msgid "{value, plural, one {# day} other {# days}}"
 msgstr "{value, plural, other {# 日}}"
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "0 means no quota. 1 TB = 1,000 GB."
+msgstr ""
 
 #: src/lib/utils.ts
 msgid "1 hour"
@@ -184,6 +193,14 @@ msgstr "システムを追加"
 msgid "Add URL"
 msgstr "URLを追加"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Add with existing token"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Add; a new token will be generated and must be configured on the agent"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 msgid "Adjust display options for charts."
 msgstr "チャートの表示オプションを調整します。"
@@ -209,6 +226,18 @@ msgstr "環境変数を設定した後、変更を有効にするために vpsmo
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Agent"
 msgstr "エージェント"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Agent disconnected; showing the last synced cache."
+msgstr ""
+
+#: src/components/routes/system/history-status.tsx
+msgid "Agent offline cache: 7 days, one sample per minute."
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Agent requires host networking"
+msgstr ""
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -238,6 +267,14 @@ msgstr "すべてのコンテナ"
 msgid "All Systems"
 msgstr "すべてのシステム"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Already listed; keep existing settings and token"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Apply imported traffic settings to existing systems"
+msgstr ""
+
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Are you sure you want to delete {name}?"
 msgstr "{name}を削除してもよろしいですか？"
@@ -251,15 +288,19 @@ msgstr "よろしいですか？"
 msgid "Automatic copy requires a secure context."
 msgstr "自動コピーには安全なコンテキストが必要です。"
 
+#. Package version available to install
+#: src/components/routes/system/package-updates-table.tsx
+msgid "Available"
+msgstr "利用可能"
+
 #: src/components/routes/system/storage-pools-table.tsx
 msgctxt "Disk space available"
 msgid "Available"
 msgstr "利用可能"
 
-#. Package version available to install
-#: src/components/routes/system/package-updates-table.tsx
-msgid "Available"
-msgstr "利用可能"
+#: src/components/routes/system/history-status.tsx
+msgid "Available since"
+msgstr ""
 
 #: src/components/routes/system/chart-card.tsx
 msgid "Average"
@@ -356,17 +397,25 @@ msgstr "前"
 msgid "Below {0}{1} in last {2, plural, one {# minute} other {# minutes}}"
 msgstr "過去{2, plural, one {# 分} other {# 分}}で{0}{1}を下回っています"
 
-#: src/components/login/auth-form.tsx
-msgid "vpsmonitor supports OpenID Connect and many OAuth2 authentication providers."
-msgstr "vpsmonitorはOpenID Connectと多くのOAuth2認証プロバイダーをサポートしています。"
+#: src/components/routes/settings/import-systems.tsx
+msgid "Billing day"
+msgstr ""
 
-#: src/components/routes/settings/notifications.tsx
-msgid "vpsmonitor uses <0>Shoutrrr</0> to integrate with popular notification services."
-msgstr "vpsmonitorは<0>Shoutrrr</0>を使用して、人気のある通知サービスと統合します。"
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Billing day (UTC)"
+msgstr ""
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Billing interface"
+msgstr ""
+
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Billing period"
+msgstr ""
 
 #: src/components/add-system.tsx
-msgid "Binary"
-msgstr "バイナリ"
+#~ msgid "Binary"
+#~ msgstr "バイナリ"
 
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/general.tsx
@@ -386,6 +435,10 @@ msgstr "一括追加"
 msgid "Bulk Add {foo}"
 msgstr "{foo} を一括追加"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "By default, new systems belong to the current administrator. Email matching requires every listed user to exist in this Hub."
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/general.tsx
 msgid "Bytes (KB/s, MB/s, GB/s)"
@@ -394,6 +447,18 @@ msgstr "バイト (KB/s, MB/s, GB/s)"
 #: src/components/routes/system/charts/memory-charts.tsx
 msgid "Cache / Buffers"
 msgstr "キャッシュ / バッファ"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Cached history could not be loaded. Live monitoring remains available."
+msgstr ""
+
+#: src/components/routes/system/history-status.tsx
+msgid "Cached samples synced."
+msgstr ""
+
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Calendar month"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Can reload"
@@ -428,8 +493,8 @@ msgid "Caution - potential data loss"
 msgstr "注意 - データ損失の可能性"
 
 #: src/components/routes/settings/general.tsx
-msgid "Celsius (°C)"
-msgstr "摂氏 (°C)"
+#~ msgid "Celsius (°C)"
+#~ msgstr "摂氏 (°C)"
 
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 #: src/components/network-monitors-table/network-monitors-columns.tsx
@@ -460,6 +525,10 @@ msgstr "メトリックの表示単位を変更します。"
 #: src/components/routes/settings/general.tsx
 msgid "Change general application options."
 msgstr "一般的なアプリケーションオプションを変更します。"
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Changing interfaces can make this billing period discontinuous. Interfaces are never added together."
+msgstr ""
 
 #: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Charge"
@@ -503,6 +572,19 @@ msgstr "確認日時 {0}"
 msgid "Checksum errors"
 msgstr "チェックサムエラー"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Choose a YAML export (up to 1 MiB)"
+msgstr ""
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Choose an interface"
+msgstr ""
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Choose one billing interface. All daily boundaries use UTC."
+msgstr ""
+
 #: src/components/containers-table/containers-table.tsx
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/system/package-updates-table.tsx
@@ -541,6 +623,14 @@ msgstr "システムをクリックして詳細を表示します。"
 msgid "Click to copy"
 msgstr "クリックしてコピー"
 
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Collected"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Collection needs attention"
+msgstr ""
+
 #: src/components/login/forgot-pass-form.tsx
 #: src/components/login/forgot-pass-form.tsx
 msgid "Command line instructions"
@@ -561,6 +651,10 @@ msgstr "アラート通知の受信方法を設定します。"
 #: src/components/network-monitors-table/monitor-dialog.tsx
 msgid "Configure response monitoring from this agent."
 msgstr "このエージェントからの応答監視を設定します。"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Confirm import"
+msgstr ""
 
 #: src/components/login/auth-form.tsx
 #: src/components/login/auth-form.tsx
@@ -627,10 +721,9 @@ msgstr "コピー元"
 msgid "Copy host"
 msgstr "ホストをコピー"
 
-#: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "Copy Linux command"
-msgstr "Linuxコマンドをコピー"
+#~ msgid "Copy Linux command"
+#~ msgstr "Linuxコマンドをコピー"
 
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Copy name"
@@ -645,8 +738,8 @@ msgid "Copy text"
 msgstr "テキストをコピー"
 
 #: src/components/add-system.tsx
-msgid "Copy the installation command for the agent below, or register agents automatically with a <0>universal token</0>."
-msgstr "下記のエージェントのインストールコマンドをコピーするか、<0>ユニバーサルトークン</0>を使用してエージェントを自動登録してください。"
+#~ msgid "Copy the installation command for the agent below, or register agents automatically with a <0>universal token</0>."
+#~ msgstr "下記のエージェントのインストールコマンドをコピーするか、<0>ユニバーサルトークン</0>を使用してエージェントを自動登録してください。"
 
 #: src/components/add-system.tsx
 msgid "Copy the<0>docker-compose.yml</0> content for the agent below, or register agents automatically with a <1>universal token</1>."
@@ -665,6 +758,15 @@ msgstr "YAMLをコピー"
 msgctxt "Core system metrics"
 msgid "Core"
 msgstr "コア"
+
+#: src/components/routes/settings/import-systems.tsx
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Count mode"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Coverage unverified"
+msgstr ""
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
@@ -749,6 +851,10 @@ msgstr "累積書き込み"
 msgid "Current"
 msgstr "現在"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Current settings"
+msgstr ""
+
 #. Context: Battery state
 #. Context: Battery state
 #: src/components/routes/system/charts/sensor-charts.tsx
@@ -765,6 +871,14 @@ msgstr "サイクル"
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Daily"
 msgstr "毎日"
+
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Daily traffic (UTC)"
+msgstr ""
+
+#: src/components/routes/system/traffic-panel.tsx
+msgid "days"
+msgstr ""
 
 #: src/components/routes/system/info-bar.tsx
 msgctxt "Default system layout option"
@@ -799,6 +913,10 @@ msgstr "詳細"
 msgid "Device"
 msgstr "デバイス"
 
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Disabled"
+msgstr ""
+
 #. Context: Battery state
 #: src/lib/i18n.ts
 msgid "Discharging"
@@ -831,6 +949,14 @@ msgstr "閉じる"
 msgctxt "Layout display options"
 msgid "Display"
 msgstr "表示"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Display unit"
+msgstr ""
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Display units"
+msgstr ""
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
 msgid "DNS Server"
@@ -869,6 +995,10 @@ msgstr "停止 ({downSystemsLength})"
 msgid "Download"
 msgstr "ダウンロード"
 
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Download YAML"
+msgstr ""
+
 #: src/components/alerts-history-columns.tsx
 msgid "Duration"
 msgstr "期間"
@@ -902,6 +1032,10 @@ msgstr "メール通知"
 #: src/lib/i18n.ts
 msgid "Empty"
 msgstr "空"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Enabled"
+msgstr ""
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -994,16 +1128,21 @@ msgid "Export"
 msgstr "エクスポート"
 
 #: src/components/routes/settings/config-yaml.tsx
+#: src/components/routes/settings/config-yaml.tsx
 msgid "Export configuration"
 msgstr "設定をエクスポート"
+
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Export traffic settings only"
+msgstr ""
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "Export your current systems configuration."
 msgstr "現在のシステム設定をエクスポートします。"
 
 #: src/components/routes/settings/general.tsx
-msgid "Fahrenheit (°F)"
-msgstr "華氏 (°F)"
+#~ msgid "Fahrenheit (°F)"
+#~ msgstr "華氏 (°F)"
 
 #: src/components/routes/system/smart-table.tsx
 msgid "Failed Attributes:"
@@ -1096,11 +1235,10 @@ msgctxt "Free space"
 msgid "Free"
 msgstr "空き"
 
-#: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgctxt "Button to copy install command"
-msgid "FreeBSD command"
-msgstr "FreeBSD コマンド"
+#~ msgctxt "Button to copy install command"
+#~ msgid "FreeBSD command"
+#~ msgstr "FreeBSD コマンド"
 
 #. Context: Battery state
 #: src/components/routes/system/info-bar.tsx
@@ -1170,15 +1308,19 @@ msgstr "タイムスタンプを非表示"
 msgid "Hide token"
 msgstr "トークンを非表示"
 
-#: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgctxt "Button to copy install command"
-msgid "Homebrew command"
-msgstr "Homebrew コマンド"
+#~ msgctxt "Button to copy install command"
+#~ msgid "Homebrew command"
+#~ msgstr "Homebrew コマンド"
 
 #: src/components/add-system.tsx
+#: src/components/routes/settings/import-systems.tsx
 msgid "Host / IP"
 msgstr "ホスト / IP"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Host clock moved backwards"
+msgstr ""
 
 #: src/components/routes/settings/heartbeat.tsx
 msgid "HTTP Method"
@@ -1227,9 +1369,68 @@ msgctxt "Docker image"
 msgid "Image update available"
 msgstr "イメージの更新があります"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Import an original vpsmonitor or vpsmonitor YAML export. Add systems in one batch, or restore traffic settings to matching systems."
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Import existing systems"
+msgstr ""
+
+#: src/components/add-system.tsx
+msgid "Import existing systems from YAML"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Import failed. No systems were imported. Check your connection and administrator access, then preview again."
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Imported"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Imported settings"
+msgstr ""
+
+#. placeholder {0}: plan.created
+#. placeholder {1}: plan.updated
+#. placeholder {2}: plan.skip
+#: src/components/routes/settings/import-systems.tsx
+msgid "Imported: {0}. Traffic updated: {1}. Skipped: {2}."
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Importing adds connection settings, not monitoring history or the Hub key. Existing agents must trust this Hub's public key; WebSocket agents must also use this Hub's URL. Reinstalling the agent is unnecessary."
+msgstr ""
+
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Inactive"
 msgstr "非アクティブ"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Inbound + outbound"
+msgstr ""
+
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Include traffic settings in system configuration"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Incomplete period"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Initializing"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Interface"
+msgstr ""
+
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Interface counters may differ from the provider's bill."
+msgstr ""
 
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 #: src/components/network-monitors-table/network-monitors-columns.tsx
@@ -1245,9 +1446,35 @@ msgstr "間隔（秒）"
 msgid "Invalid email address."
 msgstr "無効なメールアドレスです。"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Invalid name or host"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Invalid token (9–255 characters required)"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Invalid traffic settings"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Invalid YAML. Use an original vpsmonitor export with 1–1000 systems, at most 1 MiB. Check names, hosts, ports, tokens and users."
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Keep current traffic settings; enable traffic updates to apply this row"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 msgid "Language"
 msgstr "言語"
+
+#: src/components/routes/system/history-status.tsx
+#: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Last sync"
+msgstr ""
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Layout"
@@ -1291,10 +1518,19 @@ msgstr "平均負荷"
 msgid "Load state"
 msgstr "ロード状態"
 
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Loading traffic"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Loading..."
 msgstr "読み込み中..."
+
+#: src/components/traffic/traffic-usage-cell.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Loading…"
+msgstr ""
 
 #: src/components/navbar.tsx
 #: src/components/navbar.tsx
@@ -1344,7 +1580,10 @@ msgstr "メジャー"
 msgid "Manage display and notification preferences."
 msgstr "表示と通知の設定を管理します。"
 
-#: src/components/add-system.tsx
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Manage systems with config.yml (advanced)"
+msgstr ""
+
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "手動セットアップの手順"
@@ -1395,6 +1634,10 @@ msgstr "1時間最小"
 msgid "Minor"
 msgstr "マイナー"
 
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Missing days are gaps, not zero usage. Historical coverage has not been fully verified."
+msgstr ""
+
 #. Device model
 #: src/components/routes/system/smart-table.tsx
 msgid "Model"
@@ -1410,6 +1653,10 @@ msgstr "モニター"
 msgid "Monitors created"
 msgstr "モニターを作成しました"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "More than one existing system uses this address"
+msgstr ""
+
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "Mountpoint"
 msgstr "マウントポイント"
@@ -1417,10 +1664,15 @@ msgstr "マウントポイント"
 #: src/components/add-system.tsx
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/systemd-table/systemd-table-columns.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Name"
 msgstr "名前"
+
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Native host traffic accounting · UTC"
+msgstr ""
 
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -1466,19 +1718,49 @@ msgstr "パブリックインターフェースのネットワークトラフィ
 msgid "Network unit"
 msgstr "ネットワーク単位"
 
+#. placeholder {0}: plan.add
+#. placeholder {1}: plan.update
+#. placeholder {2}: plan.skip
+#. placeholder {3}: plan.errors
+#: src/components/routes/settings/import-systems.tsx
+msgid "New: {0}. Traffic updates: {1}. Skipped: {2}. Errors: {3}."
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No"
 msgstr "いいえ"
 
+#: src/components/routes/system/traffic-panel.tsx
+msgid "No daily traffic collected yet."
+msgstr ""
+
 #: src/components/routes/system/storage-pools-table.tsx
 msgid "No detail data for this pool."
 msgstr "このプールの詳細データはありません。"
 
+#: src/components/routes/system/traffic-panel.tsx
+msgid "No interface selected"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "No logs found."
 msgstr "ログが見つかりません。"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "No matching system; traffic-only import cannot create systems"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "No monitored interfaces"
+msgstr ""
+
+#: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "No quota"
+msgstr ""
 
 #: src/components/command-palette.tsx
 #: src/components/systemd-table/systemd-table.tsx
@@ -1527,6 +1809,14 @@ msgstr "通知には、最近のコンテナログの抜粋が含まれる場合
 #: src/components/login/auth-form.tsx
 msgid "OAuth 2 / OIDC support"
 msgstr "OAuth 2 / OIDCサポート"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Offline · last known"
+msgstr ""
+
+#: src/components/routes/system/history-status.tsx
+msgid "Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache."
+msgstr ""
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
@@ -1577,11 +1867,23 @@ msgstr "任意。デフォルトはエージェントのシステムリゾルバ
 msgid "Or continue with"
 msgstr "または、以下の方法でログイン"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Or paste YAML"
+msgstr ""
+
 #. Package version
 #: src/components/routes/system/cpu-sheet.tsx
 #: src/components/routes/system/package-updates-table.tsx
 msgid "Other"
 msgstr "その他"
+
+#: src/components/routes/settings/import-systems.tsx
+#: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-settings-dialog.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Outbound only"
+msgstr ""
 
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Overwrite existing alerts"
@@ -1651,6 +1953,10 @@ msgstr "一時停止"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Paused"
 msgstr "一時停止中"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Paused · last known"
+msgstr ""
 
 #: src/components/systems-table/systems-table.tsx
 msgid "Paused ({pausedSystemsLength})"
@@ -1750,6 +2056,14 @@ msgstr "記録された時点での正確な利用"
 msgid "Preferred Language"
 msgstr "優先言語"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Preserve original user assignments by email"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Preview import"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "プロセス開始"
@@ -1779,6 +2093,15 @@ msgstr "キューの深さ"
 msgid "Quiet Hours"
 msgstr "サイレント時間"
 
+#: src/components/routes/settings/import-systems.tsx
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Quota"
+msgstr ""
+
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Quota usage"
+msgstr ""
+
 #: src/components/routes/system/raw-capacity-label.tsx
 #: src/components/routes/system/storage-pools-table.tsx
 #: src/components/routes/system/storage-pools-table.tsx
@@ -1806,8 +2129,17 @@ msgid "Read errors"
 msgstr "読み取りエラー"
 
 #: src/components/routes/system/charts/network-charts.tsx
+#: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "Received"
 msgstr "受信"
+
+#: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-settings-dialog.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Received + sent"
+msgstr ""
 
 #: src/components/containers-table/containers-table.tsx
 #: src/components/logs-display.tsx
@@ -1818,9 +2150,17 @@ msgstr "受信"
 msgid "Refresh"
 msgstr "更新"
 
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Refresh traffic"
+msgstr ""
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Relationships"
 msgstr "関係"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Repeated address with traffic settings; remove the duplicate row"
+msgstr ""
 
 #: src/components/login/login.tsx
 msgid "Request a one-time password"
@@ -1868,10 +2208,18 @@ msgstr "再起動"
 msgid "Resume"
 msgstr "再開"
 
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Retry"
+msgstr ""
+
 #: src/components/token-value.tsx
 #: src/components/token-value.tsx
 msgid "Reveal token"
 msgstr "トークンを表示"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Review traffic settings"
+msgstr ""
 
 #. Package version
 #: src/components/routes/system/package-updates-table.tsx
@@ -1913,6 +2261,10 @@ msgstr "{foo} を保存"
 msgid "Save address using enter key or comma. Leave blank to disable email notifications."
 msgstr "Enterキーまたはカンマを使用してアドレスを保存します。空白のままにするとメール通知が無効になります。"
 
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Save settings"
+msgstr ""
+
 #: src/components/routes/settings/general.tsx
 #: src/components/routes/settings/notifications.tsx
 msgid "Save Settings"
@@ -1925,6 +2277,10 @@ msgstr "システム を保存"
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Saved in the database and does not expire until you disable it."
 msgstr "データベースに保存され、無効にするまで有効期限が切れません。"
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Saving…"
+msgstr ""
 
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Schedule"
@@ -2001,6 +2357,10 @@ msgstr "システムを選択"
 msgid "Select targets"
 msgstr "ターゲットを選択"
 
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Select the host uplink interface"
+msgstr ""
+
 #: src/components/routes/settings/heartbeat.tsx
 msgid "Send a single heartbeat ping to verify your endpoint is working."
 msgstr "エンドポイントが機能していることを確認するために、単一のハートビート ping を送信します。"
@@ -2014,6 +2374,8 @@ msgid "Send test heartbeat"
 msgstr "テストハートビートを送信"
 
 #: src/components/routes/system/charts/network-charts.tsx
+#: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "Sent"
 msgstr "送信"
 
@@ -2038,6 +2400,10 @@ msgstr "メーターの色を変更するしきい値（パーセンテージ）
 msgid "Set the following environment variables on your vpsmonitor hub to enable heartbeat monitoring:"
 msgstr "ハートビート監視を有効にするには、vpsmonitor ハブで次の環境変数を設定します。"
 
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Set up Docker traffic collection"
+msgstr ""
+
 #: src/components/command-palette.tsx
 #: src/components/command-palette.tsx
 #: src/components/navbar.tsx
@@ -2056,6 +2422,10 @@ msgstr "設定が保存されました"
 msgid "Show timestamps"
 msgstr "タイムスタンプを表示"
 
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Show traffic usage"
+msgstr ""
+
 #: src/components/login/auth-form.tsx
 msgid "Sign in"
 msgstr "サインイン"
@@ -2068,10 +2438,18 @@ msgstr "接続中のWi-Fiインターフェースの信号強度"
 msgid "SMTP settings"
 msgstr "SMTP設定"
 
+#: src/components/routes/system/history-status.tsx
+msgid "Some history is unavailable because of a cache limit, storage error or an expired retention window. Missing samples are not treated as zero."
+msgstr ""
+
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/systems-table/systems-table.tsx
 msgid "Sort By"
 msgstr "並び替え基準"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Stale"
+msgstr ""
 
 #: src/components/routes/settings/quiet-hours.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -2087,6 +2465,7 @@ msgid "State"
 msgstr "状態"
 
 #: src/components/containers-table/containers-table-columns.tsx
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/routes/system/smart-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systems-table/systems-table.tsx
@@ -2097,6 +2476,10 @@ msgstr "ステータス"
 #: src/components/systemd-table/systemd-table-columns.tsx
 msgid "Sub State"
 msgstr "サブ状態"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Suspected counter reset"
+msgstr ""
 
 #: src/components/routes/system/charts/memory-charts.tsx
 msgid "Swap space used by the system"
@@ -2110,6 +2493,10 @@ msgstr "スワップ使用量"
 #: src/components/mode-toggle.tsx
 msgid "Switch theme"
 msgstr "テーマを切り替え"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Syncing cached samples…"
+msgstr ""
 
 #: src/components/alerts-history-columns.tsx
 #: src/components/containers-table/containers-table-columns.tsx
@@ -2185,8 +2572,8 @@ msgid "Temperature"
 msgstr "温度"
 
 #: src/components/routes/settings/general.tsx
-msgid "Temperature unit"
-msgstr "温度単位"
+#~ msgid "Temperature unit"
+#~ msgstr "温度単位"
 
 #: src/components/routes/system/charts/sensor-charts.tsx
 msgid "Temperatures of system sensors"
@@ -2204,6 +2591,14 @@ msgstr "テストハートビート"
 msgid "Test notification sent"
 msgstr "テスト通知が送信されました"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "The file exceeds 1 MiB."
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "The import preview changed. Review the new preview before confirming again."
+msgstr ""
+
 #: src/components/routes/settings/heartbeat.tsx
 msgid "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
 msgstr "全体的なステータスは、すべてのシステムが稼働している場合は <0>ok</0>、アラートがトリガーされた場合は <1>警告</1>、いずれかのシステムがダウンしている場合は <2>エラー</2> になります。"
@@ -2212,9 +2607,21 @@ msgstr "全体的なステータスは、すべてのシステムが稼働して
 msgid "Then log into the backend and reset your user account password in the users table."
 msgstr "その後、バックエンドにログインして、ユーザーテーブルでユーザーアカウントのパスワードをリセットしてください。"
 
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "This account can view settings but cannot change them."
+msgstr ""
+
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "This action cannot be undone. This will permanently delete all current records for {name} from the database."
 msgstr "この操作は元に戻せません。これにより、データベースから{name}のすべての現在のレコードが永久に削除されます。"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "This Hub uses config.yml startup sync. Remove or migrate that file before importing; otherwise the next restart could delete imported systems."
+msgstr ""
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "This virtual interface may count traffic already recorded by the public interface."
+msgstr ""
 
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
@@ -2237,6 +2644,10 @@ msgstr "時間形式"
 msgid "To email(s)"
 msgstr "宛先メールアドレス"
 
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Today"
+msgstr ""
+
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Token"
@@ -2250,6 +2661,10 @@ msgstr "{0} のトークン"
 #: src/components/token-value.tsx
 msgid "Token hidden"
 msgstr "トークンは非表示です"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Token is already assigned to another address"
+msgstr ""
 
 #: src/components/command-palette.tsx
 #: src/components/routes/settings/layout.tsx
@@ -2289,6 +2704,42 @@ msgstr "読み取り/書き込みに費やした合計時間 (100% を超える�
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Total: {0}"
 msgstr "合計: {0}"
+
+#: src/components/routes/system.tsx
+#: src/components/routes/system/traffic-panel.tsx
+#: src/components/routes/system/traffic-panel.tsx
+#: src/components/systems-table/systems-table-columns.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Traffic"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Traffic not enabled"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Traffic quota usage"
+msgstr ""
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Traffic settings"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Traffic settings already match"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Traffic storage needs attention"
+msgstr ""
+
+#: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Traffic unavailable"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Triggered by"
@@ -2373,9 +2824,25 @@ msgstr "ディスクの使用量がしきい値を超えたときにトリガー
 msgid "Type"
 msgstr "タイプ"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "Unable to read the selected file."
+msgstr ""
+
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Unable to refresh. Showing last known data."
+msgstr ""
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Unable to save. Check the quota, interface and permissions."
+msgstr ""
+
 #: src/lib/alerts.ts
 msgid "Unhealthy"
 msgstr "異常"
+
+#: src/components/traffic/traffic-settings-dialog.tsx
+msgid "Unit"
+msgstr ""
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Unit file"
@@ -2404,6 +2871,10 @@ msgstr "不明"
 msgid "Unlimited"
 msgstr "無制限"
 
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Unsupported platform"
+msgstr ""
+
 #. Context: System is up
 #: src/components/routes/system/info-bar.tsx
 #: src/components/systems-table/systems-table-columns.tsx
@@ -2423,6 +2894,14 @@ msgstr "最新"
 msgid "Update"
 msgstr "更新"
 
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Update failed"
+msgstr ""
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Update traffic settings only; keep connection and history"
+msgstr ""
+
 #: src/components/containers-table/containers-table-columns.tsx
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 #: src/components/network-monitors-table/network-monitors-columns.tsx
@@ -2440,6 +2919,10 @@ msgstr "10分ごとに更新されます。"
 #: src/components/systems-table/systems-table-columns.tsx
 msgid "Updates"
 msgstr "更新"
+
+#: src/components/routes/settings/import-systems.tsx
+msgid "Updates interface, quota, billing mode and period, display unit and enabled state. Connection settings, collector status and historical counters are preserved. Traffic-only files never create systems."
+msgstr ""
 
 #: src/components/routes/system/network-sheet.tsx
 msgid "Upload"
@@ -2476,6 +2959,10 @@ msgstr "自己署名証明書に使用します。"
 msgid "Used"
 msgstr "使用中"
 
+#: src/components/routes/settings/import-systems.tsx
+msgid "User email not found; disable original user mapping or create the user first"
+msgstr ""
+
 #: src/components/command-palette.tsx
 #: src/components/navbar.tsx
 msgid "Users"
@@ -2489,6 +2976,14 @@ msgstr "利用率"
 #: src/components/alerts-history-columns.tsx
 msgid "Value"
 msgstr "値"
+
+#: src/components/routes/system/traffic-panel.tsx
+msgid "Values are as of the last sync; today is still in progress."
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Verify UTC configuration"
+msgstr ""
 
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/system/info-bar.tsx
@@ -2519,10 +3014,38 @@ msgstr "直近200件のアラートを表示します。"
 msgid "Visible Fields"
 msgstr "表示列"
 
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "vnStat database unavailable"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "vnStat not installed"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "vnStat permission denied"
+msgstr ""
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "vnStat query timed out"
+msgstr ""
+
+#: src/components/login/auth-form.tsx
+msgid "vpsmonitor supports OpenID Connect and many OAuth2 authentication providers."
+msgstr "vpsmonitorはOpenID Connectと多くのOAuth2認証プロバイダーをサポートしています。"
+
+#: src/components/routes/settings/notifications.tsx
+msgid "vpsmonitor uses <0>Shoutrrr</0> to integrate with popular notification services."
+msgstr "vpsmonitorは<0>Shoutrrr</0>を使用して、人気のある通知サービスと統合します。"
+
 #: src/components/charts/chart-no-values.tsx
 #: src/components/routes/system/chart-card.tsx
 msgid "Waiting for enough records to display"
 msgstr "表示に必要なデータが揃うまで待機中"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Waiting for the first persisted sample."
+msgstr ""
 
 #: src/components/routes/settings/general.tsx
 msgid "Want to help improve our translations? Check <0>Crowdin</0> for details."
@@ -2556,11 +3079,10 @@ msgstr "POST を使用する場合、各ハートビートには、システム�
 msgid "Wi-Fi signal"
 msgstr "Wi-Fi信号"
 
-#: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgctxt "Button to copy install command"
-msgid "Windows command"
-msgstr "Windows コマンド"
+#~ msgctxt "Button to copy install command"
+#~ msgid "Windows command"
+#~ msgstr "Windows コマンド"
 
 #. Disk write
 #. Disk write
@@ -2582,9 +3104,10 @@ msgid "YAML Config"
 msgstr "YAML設定"
 
 #: src/components/routes/settings/config-yaml.tsx
-msgid "YAML Configuration"
-msgstr "YAML設定"
+#~ msgid "YAML Configuration"
+#~ msgstr "YAML設定"
 
+#: src/components/routes/settings/import-systems.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx
 #: src/components/systemd-table/systemd-table.tsx

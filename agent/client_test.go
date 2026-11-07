@@ -189,7 +189,7 @@ func TestWebSocketClient_GetOptions(t *testing.T) {
 
 			// Check headers
 			assert.Equal(t, "test-token", options.RequestHeader.Get("X-Token"))
-			assert.Equal(t, vpsmonitor.Version, options.RequestHeader.Get("X-vpsmonitor"))
+			assert.Equal(t, vpsmonitor.Version, options.RequestHeader.Get("X-Vpsmonitor"))
 			assert.Contains(t, options.RequestHeader.Get("User-Agent"), "Mozilla/5.0")
 
 			// Test options caching
@@ -853,7 +853,7 @@ func TestWebSocketClient_GetOptionsHubHeaders(t *testing.T) {
 	assert.Equal(t, "abc.access", header.Get("Cf-Access-Client-Id"))
 	assert.Equal(t, "curl/8.0", header.Get("User-Agent"))
 	assert.Equal(t, "test-token", header.Get("X-Token"))
-	assert.Equal(t, vpsmonitor.Version, header.Get("X-vpsmonitor"))
+	assert.Equal(t, vpsmonitor.Version, header.Get("X-Vpsmonitor"))
 }
 
 // TestNewWebSocketClientInvalidHubHeaders verifies that a malformed

@@ -182,7 +182,7 @@ func parseImport(content string) (config, error) {
 	if len(cfg.Systems) == 0 || len(cfg.Systems) > 1000 {
 		return cfg, errors.New("system count")
 	}
-	if (cfg.Kind != "" && cfg.Kind != "vpsmonitor-plus-config" && cfg.Kind != "vpsmonitor-plus-traffic") || cfg.TrafficSchema > 1 {
+	if (cfg.Kind != "" && cfg.Kind != "vpsmonitor-config" && cfg.Kind != "vpsmonitor-traffic") || cfg.TrafficSchema > 1 {
 		return cfg, errors.New("unsupported config schema")
 	}
 	if cfg.Kind != "" && cfg.TrafficSchema != 1 {
@@ -280,7 +280,7 @@ func planImport(app core.App, cfg config, mode, owner string, applyTraffic bool)
 			} else if s.Traffic != nil {
 				item.Row.Reason = "traffic_not_applied"
 			}
-		} else if cfg.Kind == "vpsmonitor-plus-traffic" {
+		} else if cfg.Kind == "vpsmonitor-traffic" {
 			item.Row.Action, item.Row.Reason = "error", "unknown_endpoint"
 		} else if s.Token != "" && tokens[s.Token] != "" {
 			item.Row.Action, item.Row.Reason = "error", "token_conflict"
@@ -299,7 +299,7 @@ func planImport(app core.App, cfg config, mode, owner string, applyTraffic bool)
 				}
 			}
 		}
-		if cfg.Kind == "vpsmonitor-plus-traffic" && s.Traffic == nil {
+		if cfg.Kind == "vpsmonitor-traffic" && s.Traffic == nil {
 			item.Row.Action, item.Row.Reason = "error", "invalid_traffic"
 		}
 		seen[endpoint] = true

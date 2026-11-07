@@ -13,7 +13,8 @@ import (
 type PublicAppInfo struct {
 	BASE_PATH           string
 	HUB_VERSION         string
-	PLUS_VERSION        string
+	PRODUCT_VERSION     string
+	PRODUCT_COMMIT      string
 	HUB_URL             string
 	OAUTH_DISABLE_POPUP bool `json:"OAUTH_DISABLE_POPUP,omitzero"`
 }
@@ -58,10 +59,11 @@ func isAppRoute(urlPath, basePath string) bool {
 func getPublicAppInfo(hub *Hub) PublicAppInfo {
 	parsedURL, _ := url.Parse(hub.appURL)
 	info := PublicAppInfo{
-		BASE_PATH:    strings.TrimSuffix(parsedURL.Path, "/") + "/",
-		HUB_VERSION:  vpsmonitor.Version,
-		PLUS_VERSION: vpsmonitor.BuildVersion,
-		HUB_URL:      hub.appURL,
+		BASE_PATH:       strings.TrimSuffix(parsedURL.Path, "/") + "/",
+		HUB_VERSION:     vpsmonitor.Version,
+		PRODUCT_VERSION: vpsmonitor.BuildVersion,
+		PRODUCT_COMMIT:  vpsmonitor.BuildCommit,
+		HUB_URL:         hub.appURL,
 	}
 	if val, _ := utils.GetEnv("OAUTH_DISABLE_POPUP"); val == "true" {
 		info.OAUTH_DISABLE_POPUP = true

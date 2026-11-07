@@ -1,4 +1,4 @@
-// Package traffic defines the optional vnStat wire contract. Byte values are
+// Package traffic defines the native accounting wire contract. Byte values are
 // absolute daily totals, never deltas. Existing system metric keys are untouched.
 package traffic
 
@@ -12,11 +12,15 @@ import (
 const (
 	SchemaVersion              = 1
 	MaxSafeBytes        uint64 = 1<<53 - 1
-	MaxInterfaces              = 16
+	MaxInterfaces              = 64
 	MaxDays                    = 400
 	MaxPayload                 = 256 * 1024
 	OK                         = "ok"
 	Initializing               = "initializing"
+	ClockError                 = "clock_error"
+	StorageError               = "storage_error"
+	InterfaceRequired          = "interface_required"
+	NamespaceMismatch          = "host_network_required"
 	Disabled                   = "disabled"
 	Missing                    = "vnstat_missing"
 	NoDatabase                 = "no_database"
@@ -34,11 +38,13 @@ const (
 
 type DailyBucket struct {
 	Day     string `json:"day" cbor:"0,keyasint"`
+	Partial bool   `json:"partial,omitempty" cbor:"3,keyasint,omitempty"`
 	RxBytes uint64 `json:"rx" cbor:"1,keyasint"`
 	TxBytes uint64 `json:"tx" cbor:"2,keyasint"`
 }
 
 type InterfaceDaily struct {
+	SourceID        string        `json:"source_id,omitempty" cbor:"4,keyasint,omitempty"`
 	Name            string        `json:"name" cbor:"0,keyasint"`
 	Days            []DailyBucket `json:"days" cbor:"1,keyasint"`
 	SourceUpdatedAt int64         `json:"source_updated_at" cbor:"2,keyasint"`
@@ -55,8 +61,8 @@ type Snapshot struct {
 	RefreshSeconds      int64            `json:"refresh_seconds" cbor:"6,keyasint"`
 	SaveIntervalSeconds int64            `json:"save_interval_seconds" cbor:"7,keyasint"`
 	// This is an operator attestation, not inferred from the CLI's timezone.
-	UTCValidFromDay string `json:"utc_valid_from_day,omitempty" cbor:"8,keyasint,omitempty"`
-	VNStatVersion   string `json:"vnstat_version,omitempty" cbor:"9,keyasint,omitempty"`
+	UTCValidFromDay  string `json:"utc_valid_from_day,omitempty" cbor:"8,keyasint,omitempty"`
+	CollectorVersion string `json:"collector_version,omitempty" cbor:"9,keyasint,omitempty"`
 }
 
 func ParseDay(value string) (time.Time, error) {
@@ -76,12 +82,12 @@ func (s *Snapshot) Validate(now time.Time) error {
 	if s == nil || s.SchemaVersion != SchemaVersion || s.ObservedAt <= 0 || s.ObservedAt > now.Unix()+300 {
 		return errors.New("invalid traffic snapshot")
 	}
-	if s.RefreshSeconds < 60 || s.RefreshSeconds > 3600 || len(s.Interfaces) > MaxInterfaces {
+	if s.RefreshSeconds < 15 || s.RefreshSeconds > 3600 || len(s.Interfaces) > MaxInterfaces {
 		return errors.New("traffic limits exceeded")
 	}
 	if s.Status != OK {
 		switch s.Status {
-		case Initializing, Disabled, Missing, NoDatabase, NoInterfaces, UnsupportedTimebase, UnsupportedVersion, UnsupportedPlatform, Timeout, InvalidJSON, PermissionDenied, TooLarge, ExecFailed, InvalidConfig:
+		case ClockError, StorageError, InterfaceRequired, NamespaceMismatch, Initializing, Disabled, Missing, NoDatabase, NoInterfaces, UnsupportedTimebase, UnsupportedVersion, UnsupportedPlatform, Timeout, InvalidJSON, PermissionDenied, TooLarge, ExecFailed, InvalidConfig:
 			if len(s.Interfaces) != 0 || s.ErrorCode != s.Status {
 				return errors.New("invalid traffic error")
 			}
@@ -91,7 +97,7 @@ func (s *Snapshot) Validate(now time.Time) error {
 		}
 	}
 	from, err := ParseDay(s.UTCValidFromDay)
-	if err != nil || s.Timebase != "utc" || s.ErrorCode != "" || s.SaveIntervalSeconds < 60 || s.SaveIntervalSeconds > 3600 || len(s.Interfaces) == 0 || from.After(now) {
+	if err != nil || s.Timebase != "utc" || s.ErrorCode != "" || s.SaveIntervalSeconds < 15 || s.SaveIntervalSeconds > 3600 || len(s.Interfaces) == 0 || from.After(now) {
 		return errors.New("unverified traffic source")
 	}
 	names := make(map[string]bool)

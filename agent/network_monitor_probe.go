@@ -12,7 +12,7 @@ import (
 	"github.com/CodeAIX/vpsmonitor/internal/entities/monitor"
 )
 
-const networkMonitorUserAgent = "vpsmonitor-Agent/" + vpsmonitor.Version + " (+https://vpsmonitor.dev)"
+const networkMonitorUserAgent = "vpsmonitor-Agent/" + vpsmonitor.Version + " (+https://github.com/CodeAIX/vpsmonitor)"
 
 // monitorProbe performs one check. Errors are recorded as loss by the task runner.
 // Implementations must honor cancellation and bound their execution time.

@@ -98,7 +98,7 @@ func (opts *cmdOptions) parse() bool {
 	// Must run after pflag.Parse()
 	switch {
 	case *version:
-		fmt.Println(vpsmonitor.AppName+"-agent", vpsmonitor.Version)
+		fmt.Println(vpsmonitor.AppName+"-agent", vpsmonitor.BuildVersion)
 		return true
 	case *help || subcommand == "help":
 		pflag.Usage()

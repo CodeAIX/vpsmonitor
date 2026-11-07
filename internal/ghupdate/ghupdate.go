@@ -393,7 +393,7 @@ func isGlibc() bool {
 
 func getApiURL(useMirror bool, owner, repo string) string {
 	if useMirror {
-		return fmt.Sprintf("https://gh.vpsmonitor.dev/repos/%s/%s/releases/latest?api=true", owner, repo)
+		return fmt.Sprintf("https://github.com/CodeAIX/vpsmonitor", owner, repo)
 	}
 	return fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, repo)
 }

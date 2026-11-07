@@ -13,12 +13,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gliderlabs/ssh"
 	"github.com/CodeAIX/vpsmonitor"
 	"github.com/CodeAIX/vpsmonitor/agent/deltatracker"
 	"github.com/CodeAIX/vpsmonitor/agent/utils"
 	"github.com/CodeAIX/vpsmonitor/internal/common"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/system"
+	"github.com/gliderlabs/ssh"
 	gossh "golang.org/x/crypto/ssh"
 )
 
@@ -61,7 +61,7 @@ type Agent struct {
 	storagePoolManager        *StoragePoolManager                                   // Manages storage pool and dataset data
 	packageUpdates            *packageUpdatesManager                                // Checks for pending package updates
 	lastHubRequest            atomic.Int64                                          // Wall clock Unix nanoseconds of the last hub stats request
-	trafficCollector          *vnStatCollector                                      // Optional immutable vnStat snapshots
+	trafficCollector          *nativeTrafficCollector                               // Native durable traffic snapshots
 	history                   *agentHistory                                         // Seven-day durable ordinary metrics journal
 }
 
@@ -173,20 +173,9 @@ func NewAgent(dataDir ...string) (agent *Agent, err error) {
 		agent.systemInfo.SystemdLogs = agent.systemdManager.logsEnabled
 	}
 
-	agent.smartManager, err = NewSmartManager()
-	if err != nil {
-		slog.Debug("SMART", "err", err)
-	}
-
 	agent.packageUpdates = newPackageUpdatesManager(agent.dataDir)
-	agent.trafficCollector = newTrafficCollector()
+	agent.trafficCollector = newTrafficCollector(agent.dataDir)
 	agent.history = newAgentHistory(agent.dataDir)
-
-	// initialize GPU manager
-	agent.gpuManager, err = NewGPUManager()
-	if err != nil {
-		slog.Debug("GPU", "err", err)
-	}
 
 	// if debugging, print stats
 	if agent.debug {

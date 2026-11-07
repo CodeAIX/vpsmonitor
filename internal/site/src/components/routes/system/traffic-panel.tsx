@@ -62,7 +62,7 @@ export default function TrafficPanel({ systemId }: { systemId: string }) {
 						<Trans>Traffic</Trans>
 					</CardTitle>
 					<CardDescription>
-						<Trans>Daily vnStat accounting · UTC</Trans>
+						<Trans>Native host traffic accounting · UTC</Trans>
 					</CardDescription>
 				</div>
 				<div className="flex flex-wrap gap-2">
@@ -187,7 +187,7 @@ export default function TrafficPanel({ systemId }: { systemId: string }) {
 						</p>
 						<a
 							className="mt-2 inline-block underline"
-							href="https://github.com/CodeAIX/vpsmonitor/blob/plus/main/docs/traffic/DOCKER_AGENT.md"
+							href="https://github.com/CodeAIX/vpsmonitor/blob/main/docs/DEPLOY.md"
 							target="_blank"
 							rel="noreferrer"
 						>

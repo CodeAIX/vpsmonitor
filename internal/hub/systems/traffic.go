@@ -130,6 +130,9 @@ func SaveTrafficSnapshot(ctx context.Context, app core.App, id string, snapshot 
 			settings.Set("billing_timezone", "UTC")
 			settings.Set("display_unit", "GB")
 		}
+		if settings.GetBool("enabled") && settings.GetString("iface") == "" && snapshot.Status == traffic.OK && len(snapshot.Interfaces) == 1 {
+			settings.Set("iface", snapshot.Interfaces[0].Name)
+		}
 		last := settings.GetInt64("collector_last_observed_at")
 		if snapshot.ObservedAt < last {
 			return nil
@@ -174,9 +177,10 @@ func saveTrafficInterface(ctx context.Context, app core.App, id string, snapshot
 		source.Set("iface", iface.Name)
 		source.Set("first_seen_at", snapshot.ObservedAt)
 		source.Set("source_created_at", iface.SourceCreatedAt)
+		source.Set("source_id", iface.SourceID)
 		source.Set("quality", "normal")
 	}
-	source.Set("collector", "vnstat")
+	source.Set("collector", "native")
 	source.Set("schema_version", snapshot.SchemaVersion)
 	source.Set("timebase", "utc")
 	source.Set("last_observed_at", snapshot.ObservedAt)
@@ -187,7 +191,7 @@ func saveTrafficInterface(ctx context.Context, app core.App, id string, snapshot
 	if source.GetString("quality") != "suspected_reset" {
 		source.Set("error_code", "")
 	}
-	if source.GetInt64("source_created_at") != iface.SourceCreatedAt {
+	if source.GetInt64("source_created_at") != iface.SourceCreatedAt || source.GetString("source_id") != iface.SourceID {
 		// Freeze the generation until an explicit future recovery operation.
 		// Keeping the original created timestamp makes this sticky on retries.
 		source.Set("quality", "suspected_reset")
@@ -227,6 +231,9 @@ func saveTrafficInterface(ctx context.Context, app core.App, id string, snapshot
 			record.Set("iface", iface.Name)
 			record.Set("day", bucket.Day)
 			record.Set("quality", "normal")
+			if bucket.Partial {
+				record.Set("quality", "partial")
+			}
 		} else {
 			if record.GetString("quality") == "suspected_reset" {
 				continue
@@ -240,9 +247,12 @@ func saveTrafficInterface(ctx context.Context, app core.App, id string, snapshot
 				}
 				continue
 			}
-			if bucket.RxBytes == uint64(record.GetInt64("rx_bytes")) && bucket.TxBytes == uint64(record.GetInt64("tx_bytes")) {
+			if bucket.RxBytes == uint64(record.GetInt64("rx_bytes")) && bucket.TxBytes == uint64(record.GetInt64("tx_bytes")) && (!bucket.Partial || record.GetString("quality") == "partial") {
 				continue
 			}
+		}
+		if bucket.Partial && record.GetString("quality") != "suspected_reset" {
+			record.Set("quality", "partial")
 		}
 		record.Set("rx_bytes", bucket.RxBytes)
 		record.Set("tx_bytes", bucket.TxBytes)

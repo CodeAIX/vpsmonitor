@@ -1,5 +1,5 @@
 //go:generate -command fetchsmartctl go run ./tools/fetchsmartctl
-//go:generate fetchsmartctl -out ./smartmontools/smartctl.exe -url https://static.vpsmonitor.dev/bin/smartctl/smartctl-nc.exe -sha 3912249c3b329249aa512ce796fd1b64d7cbd8378b68ad2756b39163d9c30b47
+//go:generate fetchsmartctl -out ./smartmontools/smartctl.exe -url https://github.com/CodeAIX/vpsmonitor -sha 3912249c3b329249aa512ce796fd1b64d7cbd8378b68ad2756b39163d9c30b47
 
 package agent
 

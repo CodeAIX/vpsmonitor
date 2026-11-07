@@ -102,7 +102,7 @@ function getMeterStateByThresholds(value: number, warn = 65, crit = 90): MeterSt
  * @returns - Column definitions for the systems table
  */
 export function SystemsTableColumns(viewMode: "table" | "grid", traffic: Record<string, TrafficView> = {}, trafficLoading = false, trafficError = false): ColumnDef<SystemRecord>[] {
-	return [
+	return ([
 
 		{
 			// size: 200,
@@ -533,14 +533,14 @@ export function SystemsTableColumns(viewMode: "table" | "grid", traffic: Record<
 			hideSort: true,
 			header: sortableHeader,
 			cell(info) {
-				const version = info.getValue() as string
+				const system = info.row.original
+				const version = system.info.pv ?? (info.getValue() as string)
 				if (!version) {
 					return null
 				}
-				const system = info.row.original
 				let color = "text-red-500"
 				if (system.status === SystemStatus.Up) {
-					color = version === globalThis.VPSMONITOR.HUB_VERSION ? "text-green-500" : "text-yellow-500"
+					color = version === globalThis.VPSMONITOR.PRODUCT_VERSION ? "text-green-500" : "text-yellow-500"
 				} else if (system.status === SystemStatus.Paused) {
 					color = "text-primary/40"
 				}
@@ -562,7 +562,7 @@ export function SystemsTableColumns(viewMode: "table" | "grid", traffic: Record<
 							<ChevronRightSquareIcon className={cn("size-3 pointer-events-none", color)} />
 						)}
 						{!system.info.ct && <IndicatorDot system={system} className={cn(color, "bg-current mx-0.5")} />}
-						<span className="truncate max-w-14">{info.getValue() as string}</span>
+						<span className="truncate max-w-28">{system.info.pv ?? (info.getValue() as string)}</span>
 					</Link>
 				)
 			},
@@ -579,7 +579,7 @@ export function SystemsTableColumns(viewMode: "table" | "grid", traffic: Record<
 				</div>
 			),
 		},
-	] as ColumnDef<SystemRecord>[]
+	] as ColumnDef<SystemRecord>[]).filter((column) => !["temp", "battery", "wifi", "gpu"].includes(column.id ?? ""))
 }
 
 function sortableHeader(context: HeaderContext<SystemRecord, unknown>) {

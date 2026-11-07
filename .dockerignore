@@ -51,3 +51,11 @@ agent/lhm/obj
 agent/lhm/bin
 
 .plus-release/
+
+.local/
+.local-release/
+
+**/.env
+**/.env.*
+deploy/hub_data/
+deploy/agent_data/

@@ -181,9 +181,9 @@ func generateYAMLFormat(h core.App, format string) (string, error) {
 		Systems: make([]systemConfig, 0, len(systems)),
 	}
 	if format != "classic" {
-		config.Kind, config.TrafficSchema = "vpsmonitor-plus-config", 1
+		config.Kind, config.TrafficSchema = "vpsmonitor-config", 1
 		if format == "traffic" {
-			config.Kind = "vpsmonitor-plus-traffic"
+			config.Kind = "vpsmonitor-traffic"
 		}
 	}
 

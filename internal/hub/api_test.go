@@ -1376,7 +1376,7 @@ func TestTrustedHeaderMiddleware(t *testing.T) {
 		}
 	}()
 
-	t.Setenv("TRUSTED_AUTH_HEADER", "X-vpsmonitor-Trusted")
+	t.Setenv("TRUSTED_AUTH_HEADER", "X-Vpsmonitor-Trusted")
 
 	testAppFactory := func(t testing.TB) *pbTests.TestApp {
 		hub, _ := beszelTests.NewTestHub(t.TempDir())
@@ -1399,7 +1399,7 @@ func TestTrustedHeaderMiddleware(t *testing.T) {
 			Method: http.MethodGet,
 			URL:    "/api/vpsmonitor/getkey",
 			Headers: map[string]string{
-				"X-vpsmonitor-Trusted": "user@test.com",
+				"X-Vpsmonitor-Trusted": "user@test.com",
 			},
 			ExpectedStatus:  401,
 			ExpectedContent: []string{"requires valid"},
@@ -1410,7 +1410,7 @@ func TestTrustedHeaderMiddleware(t *testing.T) {
 			Method: http.MethodGet,
 			URL:    "/api/vpsmonitor/getkey",
 			Headers: map[string]string{
-				"X-vpsmonitor-Trusted": "user@test.com",
+				"X-Vpsmonitor-Trusted": "user@test.com",
 			},
 			ExpectedStatus:  200,
 			ExpectedContent: []string{"\"key\":", "\"v\":"},
@@ -1477,7 +1477,7 @@ func TestTrustedHeaderProxyAllowlist(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv("TRUSTED_AUTH_HEADER", "X-vpsmonitor-Trusted")
+			t.Setenv("TRUSTED_AUTH_HEADER", "X-Vpsmonitor-Trusted")
 			t.Setenv("TRUSTED_PROXY_IPS", tc.proxies)
 
 			scenario := beszelTests.ApiScenario{
@@ -1485,7 +1485,7 @@ func TestTrustedHeaderProxyAllowlist(t *testing.T) {
 				Method: http.MethodGet,
 				URL:    "/api/vpsmonitor/getkey",
 				Headers: map[string]string{
-					"X-vpsmonitor-Trusted": "user@test.com",
+					"X-Vpsmonitor-Trusted": "user@test.com",
 				},
 				ExpectedStatus:  tc.expectedStatus,
 				ExpectedContent: tc.expectedContent,

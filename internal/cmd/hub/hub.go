@@ -42,7 +42,7 @@ func getBaseApp() *pocketbase.PocketBase {
 		DefaultDataDir: vpsmonitor.AppName + "_data",
 		DefaultDev:     isDev,
 	})
-	baseApp.RootCmd.Version = vpsmonitor.Version
+	baseApp.RootCmd.Version = vpsmonitor.BuildVersion
 	baseApp.RootCmd.Use = vpsmonitor.AppName
 	baseApp.RootCmd.Short = ""
 	// add update command

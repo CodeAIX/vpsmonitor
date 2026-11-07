@@ -37,7 +37,7 @@ func init() {
 				c.AddIndex("idx_traffic_daily_range", false, "system, iface, day DESC", "")
 			case "traffic_sources":
 				c.Fields.Add(&core.TextField{Name: "iface", Required: true, Max: 64})
-				text("collector", "timebase", "status", "error_code", "first_available_day", "last_available_day", "quality", "utc_valid_from_day")
+				text("source_id", "collector", "timebase", "status", "error_code", "first_available_day", "last_available_day", "quality", "utc_valid_from_day")
 				number("schema_version", "first_seen_at", "last_observed_at", "last_success_at", "source_created_at", "source_updated_at", "refresh_seconds", "save_interval_seconds")
 				c.AddIndex("idx_traffic_source_identity", true, "system, iface", "")
 			case "traffic_settings":

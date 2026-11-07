@@ -212,9 +212,10 @@ const (
 
 // Core system data that is needed in All Systems table
 type Info struct {
-	Hostname      string `json:"h,omitempty" cbor:"0,keyasint,omitempty"` // deprecated - moved to Details struct
-	KernelVersion string `json:"k,omitempty" cbor:"1,keyasint,omitempty"` // deprecated - moved to Details struct
-	Cores         int    `json:"c,omitzero" cbor:"2,keyasint,omitzero"`   // deprecated - moved to Details struct
+	ProductVersion string `json:"pv,omitempty" cbor:"28,keyasint,omitempty"`
+	Hostname       string `json:"h,omitempty" cbor:"0,keyasint,omitempty"` // deprecated - moved to Details struct
+	KernelVersion  string `json:"k,omitempty" cbor:"1,keyasint,omitempty"` // deprecated - moved to Details struct
+	Cores          int    `json:"c,omitzero" cbor:"2,keyasint,omitzero"`   // deprecated - moved to Details struct
 	// Threads is needed in Info struct to calculate load average thresholds
 	Threads       int     `json:"t,omitzero" cbor:"3,keyasint,omitempty"`
 	CpuModel      string  `json:"m,omitempty" cbor:"4,keyasint,omitempty"` // deprecated - moved to Details struct

@@ -229,18 +229,18 @@ func (client *WebSocketClient) getOptions() *gws.ClientOption {
 		Addr:      client.hubURL.String(),
 		TlsConfig: client.tlsConfig,
 		RequestHeader: http.Header{
-			"User-Agent": []string{getUserAgent()},
-			"X-Token":    []string{client.token},
-			"X-vpsmonitor":   []string{vpsmonitor.Version},
+			"User-Agent":   []string{getUserAgent()},
+			"X-Token":      []string{client.token},
+			"X-Vpsmonitor": []string{vpsmonitor.Version},
 		},
 		NewDialer: func() (gws.Dialer, error) {
 			return agentDialer{client.agent.connectionManager.ctx}, nil
 		},
 	}
 
-	// hub rejects a handshake without a valid X-Token or X-vpsmonitor, ignoring user supplied values
+	// hub rejects a handshake without a valid X-Token or X-Vpsmonitor, ignoring user supplied values
 	for name, values := range client.hubHeaders {
-		if name == "X-Token" || name == "X-vpsmonitor" {
+		if name == "X-Token" || name == "X-Vpsmonitor" {
 			slog.Warn("Ignoring reserved header in HUB_HEADERS", "header", name)
 			continue
 		}

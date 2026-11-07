@@ -60,7 +60,7 @@ func TestPortableTrafficConfig(t *testing.T) {
 				require.NotContains(t, yaml, "portable-agent-token")
 				require.NotContains(t, yaml, "token:")
 				require.NotContains(t, yaml, "users:")
-				require.Contains(t, yaml, "vpsmonitor-plus-traffic")
+				require.Contains(t, yaml, "vpsmonitor-traffic")
 				standalone = yaml
 			}
 		}

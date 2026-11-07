@@ -130,7 +130,7 @@ const SettingsNotificationsPage = ({ userSettings }: { userSettings: UserSetting
 							<p className="text-sm text-muted-foreground leading-relaxed">
 								<Trans>
 									vpsmonitor uses{" "}
-									<a href="https://vpsmonitor.dev/guide/notifications" target="_blank" className="link" rel="noopener">
+									<a href="https://github.com/CodeAIX/vpsmonitor/blob/main/docs/DEPLOY.md" target="_blank" className="link" rel="noopener">
 										Shoutrrr
 									</a>{" "}
 									to integrate with popular notification services.

@@ -1,0 +1,27 @@
+FROM node:26.7.0-alpine@sha256:aadf416b2cdce311a8811ba3f0608a61b77dbf997500e2eafe781b51f6a0b019 AS web
+WORKDIR /app/internal/site
+COPY internal/site/package.json internal/site/package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY internal/site/ ./
+RUN npm run build
+
+FROM golang:1.27.3-alpine@sha256:fa3d596898d9f126af7c01d14ee7597bab3f39cccf392ef36b69fe77cd681f18 AS build
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+COPY --from=web /app/internal/site/dist ./internal/site/dist
+ARG TARGETOS TARGETARCH
+ARG VERSION=0.1.0-dev COMMIT=unknown
+RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X github.com/CodeAIX/vpsmonitor.BuildVersion=${VERSION} -X github.com/CodeAIX/vpsmonitor.BuildCommit=${COMMIT}" -o /hub ./internal/cmd/hub
+
+FROM scratch
+ARG VERSION=0.1.0-dev COMMIT=unknown
+LABEL org.opencontainers.image.source="https://github.com/CodeAIX/vpsmonitor" org.opencontainers.image.version="$VERSION" org.opencontainers.image.revision="$COMMIT"
+COPY --from=build /hub /hub
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+VOLUME ["/vpsmonitor_data"]
+EXPOSE 8090
+COPY LICENSE NOTICE /usr/share/licenses/vpsmonitor/
+ENTRYPOINT ["/hub"]
+CMD ["serve", "--http=0.0.0.0:8090", "--dir=/vpsmonitor_data"]

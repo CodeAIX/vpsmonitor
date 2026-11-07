@@ -26,7 +26,7 @@ const endpoint = "/api/vpsmonitor/user-alerts"
 
 const alertDebounce = 400
 
-const alertKeys = Object.keys(alertInfo) as (keyof typeof alertInfo)[]
+const alertKeys = Object.keys(alertInfo).filter((key) => !["Temperature", "Battery", "GPU"].includes(key)) as (keyof typeof alertInfo)[]
 
 /** Round to a multiple of step, trimming float noise like 0.30000000000000004 */
 const roundToStep = (val: number, step: number) => Number((Math.round(val / step) * step).toFixed(6))

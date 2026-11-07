@@ -241,7 +241,7 @@ func TestMonitorManagerGetRandomDelay(t *testing.T) {
 func TestMonitorHTTP(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "vpsmonitor-Agent/"+vpsmonitor.Version+" (+https://vpsmonitor.dev)", r.Header.Get("User-Agent"))
+			assert.Equal(t, "vpsmonitor-Agent/"+vpsmonitor.Version+" (+https://github.com/CodeAIX/vpsmonitor)", r.Header.Get("User-Agent"))
 			w.WriteHeader(http.StatusNoContent)
 		}))
 		defer server.Close()

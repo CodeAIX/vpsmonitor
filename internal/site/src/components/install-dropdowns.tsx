@@ -1,67 +1,13 @@
-import { i18n } from "@lingui/core"
 import { memo } from "react"
 import { copyToClipboard, getHubURL } from "@/lib/utils"
+import { agentCompose, agentRun } from "@/lib/deployment"
 import { DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu"
 
-// const isbeta = vpsmonitor.hub_version.includes("beta")
-// const imagetag = isbeta ? ":edge" : ""
-
-/**
- * Get the URL of the script to install the agent.
- * @param path - The path to the script (e.g. "/brew").
- * @returns The URL for the script.
- */
-const getScriptUrl = (path: string = "") => {
-	return `https://get.vpsmonitor.dev${path}`
-	// no beta for now
-	// const url = new URL("https://get.vpsmonitor.dev")
-	// url.pathname = path
-	// if (isBeta) {
-	// 	url.searchParams.set("beta", "1")
-	// }
-	// return url.toString()
+export function copyDockerCompose(_port = "45876", key: string, token: string) {
+ copyToClipboard(agentCompose(key, token, getHubURL(), globalThis.VPSMONITOR.PRODUCT_COMMIT, globalThis.VPSMONITOR.PRODUCT_VERSION))
 }
-
-export function copyDockerCompose(port = "45876", publicKey: string, token: string) {
-	copyToClipboard(`services:
-  vpsmonitor-agent:
-    image: henrygd/vpsmonitor-agent
-    container_name: vpsmonitor-agent
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./beszel_agent_data:/var/lib/vpsmonitor-agent
-      # monitor other disks / partitions by mounting a folder in /extra-filesystems
-      # - /mnt/disk/.vpsmonitor:/extra-filesystems/sda1:ro
-    environment:
-      LISTEN: ${port}
-      KEY: '${publicKey}'
-      TOKEN: ${token}
-      HUB_URL: ${getHubURL()}`)
-}
-
-export function copyDockerRun(port = "45876", publicKey: string, token: string) {
-	copyToClipboard(
-		`docker run -d --name vpsmonitor-agent --network host --restart unless-stopped -v /var/run/docker.sock:/var/run/docker.sock:ro -v beszel_agent_data:/var/lib/vpsmonitor-agent -e KEY="${publicKey}" -e LISTEN=${port} -e TOKEN="${token}" -e HUB_URL="${getHubURL()}" henrygd/vpsmonitor-agent`
-	)
-}
-
-export function copyLinuxCommand(port = "45876", publicKey: string, token: string, brew = false) {
-	let cmd = `curl -sL ${getScriptUrl(
-		brew ? "/brew" : ""
-	)} -o /tmp/install-agent.sh && chmod +x /tmp/install-agent.sh && /tmp/install-agent.sh -p ${port} -k "${publicKey}" -t "${token}" -url "${getHubURL()}"`
-	// brew script does not support --china-mirrors
-	if (!brew && (i18n.locale + navigator.language).includes("zh-CN")) {
-		cmd += ` --china-mirrors`
-	}
-	copyToClipboard(cmd)
-}
-
-export function copyWindowsCommand(port = "45876", publicKey: string, token: string) {
-	copyToClipboard(
-		`& iwr -useb ${getScriptUrl()} -OutFile "$env:TEMP\\install-agent.ps1"; & Powershell -ExecutionPolicy Bypass -File "$env:TEMP\\install-agent.ps1" -Key "${publicKey}" -Port ${port} -Token "${token}" -Url "${getHubURL()}"`
-	)
+export function copyDockerRun(_port = "45876", key: string, token: string) {
+ copyToClipboard(agentRun(key, token, getHubURL(), globalThis.VPSMONITOR.PRODUCT_COMMIT, globalThis.VPSMONITOR.PRODUCT_VERSION))
 }
 
 export interface DropdownItem {

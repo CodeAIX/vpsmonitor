@@ -26,3 +26,11 @@ dockerfile_agent_dev
 /.plus-local/
 
 /.plus-release/
+
+/.local/
+/.local-release/
+
+/deploy/.env
+/deploy/.env.*
+/deploy/hub_data/
+/deploy/agent_data/

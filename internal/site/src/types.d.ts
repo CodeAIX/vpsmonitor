@@ -6,7 +6,8 @@ declare global {
 	var VPSMONITOR: {
 		BASE_PATH: string
 		HUB_VERSION: string
-		PLUS_VERSION: string
+		PRODUCT_VERSION: string
+		PRODUCT_COMMIT: string
 		HUB_URL: string
 		OAUTH_DISABLE_POPUP: boolean
 	}
@@ -40,6 +41,7 @@ export interface WiFi {
 }
 
 export interface SystemInfo {
+	pv?: string
 	/** connected Wi-Fi interfaces */
 	wf?: Record<string, WiFi>
 	/** hostname */

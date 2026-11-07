@@ -27,7 +27,7 @@ const (
 	nvtopCmd        string = "nvtop"
 	powermetricsCmd string = "powermetrics"
 	macmonCmd       string = "macmon"
-	noGPUFoundMsg   string = "no GPU found - see https://vpsmonitor.dev/guide/gpu"
+	noGPUFoundMsg   string = "no GPU found - see https://github.com/CodeAIX/vpsmonitor"
 
 	// Command retry and timeout constants
 	retryWaitTime     time.Duration = 5 * time.Second
@@ -497,7 +497,7 @@ func (gm *GPUManager) startIntelCollector() {
 				if failures > maxFailureRetries {
 					break
 				}
-				slog.Warn("Error collecting Intel GPU data; see https://vpsmonitor.dev/guide/gpu", "err", err)
+				slog.Warn("Error collecting Intel GPU data; see https://github.com/CodeAIX/vpsmonitor", "err", err)
 				time.Sleep(retryWaitTime)
 				continue
 			}

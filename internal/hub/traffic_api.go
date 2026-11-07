@@ -102,7 +102,7 @@ func buildTrafficView(ctx context.Context, app core.App, system *core.Record, no
 		v.ErrorCode = settingsRecord.GetString("collector_error_code")
 	}
 	var sources []*core.Record
-	if err := app.RecordQuery("traffic_sources").WithContext(ctx).AndWhere(dbx.HashExp{"system": id}).OrderBy("iface").Limit(16).All(&sources); err != nil {
+	if err := app.RecordQuery("traffic_sources").WithContext(ctx).AndWhere(dbx.HashExp{"system": id}).OrderBy("iface").Limit(64).All(&sources); err != nil {
 		return v, err
 	}
 	for _, record := range sources {

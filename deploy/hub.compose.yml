@@ -1,0 +1,18 @@
+name: vpsmonitor-hub
+services:
+  hub:
+    image: vpsmonitor-hub:dev
+    build:
+      context: ..
+      dockerfile: Dockerfile.hub
+      args:
+        VERSION: ${VERSION:-0.1.0-dev}
+        COMMIT: ${COMMIT:-unknown}
+    restart: unless-stopped
+    ports:
+      - "${HUB_BIND:-127.0.0.1}:${HUB_PORT:-8090}:8090"
+    environment:
+      APP_URL: ${HUB_URL:-http://127.0.0.1:8090}
+      CHECK_UPDATES: "false"
+    volumes:
+      - ./hub_data:/vpsmonitor_data

@@ -15,8 +15,6 @@ import { memo, useEffect, useMemo, useState } from "react"
 import {
 	copyDockerCompose,
 	copyDockerRun,
-	copyLinuxCommand,
-	copyWindowsCommand,
 	type DropdownItem,
 	InstallDropdown,
 } from "@/components/install-dropdowns"
@@ -30,7 +28,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { AppleIcon, DockerIcon, FreeBsdIcon, TuxIcon, WindowsIcon } from "@/components/ui/icons"
+import { DockerIcon, } from "@/components/ui/icons"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -250,42 +248,10 @@ const ActionsButtonUniversalToken = memo(({ token, checked }: { token: string; c
 	const port = "45876"
 
 	const dropdownItems: DropdownItem[] = [
-		{
-			text: t({ message: "Copy docker compose", context: "Button to copy docker compose file content" }),
-			onClick: () => copyDockerCompose(port, publicKey, token),
-			icons: [DockerIcon],
-		},
-		{
-			text: t({ message: "Copy docker run", context: "Button to copy docker run command" }),
-			onClick: () => copyDockerRun(port, publicKey, token),
-			icons: [DockerIcon],
-		},
-		{
-			text: t`Copy Linux command`,
-			onClick: () => copyLinuxCommand(port, publicKey, token),
-			icons: [TuxIcon],
-		},
-		{
-			text: t({ message: "Homebrew command", context: "Button to copy install command" }),
-			onClick: () => copyLinuxCommand(port, publicKey, token, true),
-			icons: [TuxIcon, AppleIcon],
-		},
-		{
-			text: t({ message: "Windows command", context: "Button to copy install command" }),
-			onClick: () => copyWindowsCommand(port, publicKey, token),
-			icons: [WindowsIcon],
-		},
-		{
-			text: t({ message: "FreeBSD command", context: "Button to copy install command" }),
-			onClick: () => copyLinuxCommand(port, publicKey, token),
-			icons: [FreeBsdIcon],
-		},
-		{
-			text: t`Manual setup instructions`,
-			url: "https://vpsmonitor.dev/guide/agent-installation#binary",
-			icons: [ExternalLinkIcon],
-		},
-	]
+  {text: t({message: "Copy docker compose", context: "Button to copy docker compose file content"}), onClick: () => copyDockerCompose(port, publicKey, token), icons: [DockerIcon]},
+  {text: t({message: "Copy docker run", context: "Button to copy docker run command"}), onClick: () => copyDockerRun(port, publicKey, token), icons: [DockerIcon]},
+  {text: t`Manual setup instructions`, url: "https://github.com/CodeAIX/vpsmonitor/blob/main/docs/DEPLOY.md", icons: [ExternalLinkIcon]},
+ ]
 	return (
 		<div className="flex items-center gap-2">
 			<DropdownMenu>

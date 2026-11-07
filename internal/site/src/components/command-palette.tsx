@@ -190,14 +190,14 @@ export default memo(function CommandPalette({ open, setOpen }: { open: boolean; 
 						<CommandItem
 							keywords={["help", "oauth", "oidc"]}
 							onSelect={() => {
-								window.location.href = "https://vpsmonitor.dev/guide/what-is-vpsmonitor"
+								window.location.href = "https://github.com/CodeAIX/vpsmonitor/blob/main/docs/DEPLOY.md"
 							}}
 						>
 							<BookIcon className="me-2 size-4" />
 							<span>
 								<Trans>Documentation</Trans>
 							</span>
-							<CommandShortcut>vpsmonitor.dev</CommandShortcut>
+							<CommandShortcut>GitHub</CommandShortcut>
 						</CommandItem>
 					</CommandGroup>
 					{isAdmin() && (
