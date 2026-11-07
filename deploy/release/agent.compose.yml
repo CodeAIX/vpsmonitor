@@ -1,0 +1,18 @@
+name: vpsmonitor-agent
+services:
+  agent:
+    image: ghcr.io/codeaix/vpsmonitor-agent:${VPSMONITOR_VERSION:-v0.1.0-beta.1}
+    restart: unless-stopped
+    network_mode: host
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      KEY: ${KEY:?Set the new Hub public key}
+      TOKEN: ${TOKEN:?Set the new Agent registration token}
+      HUB_URL: ${HUB_URL:?Set a Hub URL reachable from the VPS}
+      DISABLE_SSH: "true"
+      VPSMONITOR_NETWORK_SCOPE: host
+      VPSMONITOR_TRAFFIC_INTERFACE: ${TRAFFIC_INTERFACE:-auto}
+    volumes:
+      - ./agent_data:/var/lib/vpsmonitor-agent
+      - /var/run/docker.sock:/var/run/docker.sock:ro

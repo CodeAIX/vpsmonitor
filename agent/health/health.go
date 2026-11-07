@@ -1,5 +1,5 @@
 // Package health provides functions to check and update the health of the agent.
-// It uses a file in the temp directory to store the timestamp of the last connection attempt.
+// It uses a file in the temp directory to store the last confirmed connection timestamp.
 // If the timestamp is older than 90 seconds, the agent is considered unhealthy.
 // NB: The agent must be started with the Start() method to be considered healthy.
 package health
@@ -9,23 +9,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"time"
 )
 
-// healthFile is the path to the health file
-var healthFile = getHealthFilePath()
-
-func getHealthFilePath() string {
-	filename := "beszel_health"
-	if runtime.GOOS == "linux" {
-		fullPath := filepath.Join("/dev/shm", filename)
-		if err := updateHealthFile(fullPath); err == nil {
-			return fullPath
-		}
-	}
-	return filepath.Join(os.TempDir(), filename)
-}
+// Health probes must only read the timestamp. Initializing it here would let
+// every invocation of `agent health` make an offline agent appear healthy.
+var healthFile = filepath.Join(os.TempDir(), "vpsmonitor_health")
 
 func updateHealthFile(path string) error {
 	file, err := os.Create(path)
@@ -55,5 +44,9 @@ func Update() error {
 
 // CleanUp removes the health file
 func CleanUp() error {
-	return os.Remove(healthFile)
+	err := os.Remove(healthFile)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return err
 }

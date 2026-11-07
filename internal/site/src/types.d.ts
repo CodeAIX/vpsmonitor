@@ -8,6 +8,7 @@ declare global {
 		HUB_VERSION: string
 		PRODUCT_VERSION: string
 		PRODUCT_COMMIT: string
+		AGENT_IMAGE_TAG: string
 		HUB_URL: string
 		OAUTH_DISABLE_POPUP: boolean
 	}

@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gliderlabs/ssh"
 	"github.com/CodeAIX/vpsmonitor/agent/health"
 	"github.com/CodeAIX/vpsmonitor/agent/utils"
+	"github.com/gliderlabs/ssh"
 )
 
 // ConnectionManager manages the connection state and events for the agent.
@@ -204,18 +204,20 @@ func (c *ConnectionManager) Start(ctx context.Context, serverOptions ServerOptio
 
 	c.startWsTicker()
 	defer c.stopWsTicker()
+	_ = health.CleanUp() // A restarted container can still have the last process's marker.
 	c.connect()
 
-	// update health status immediately and every 90 seconds
-	_ = health.Update()
-	healthTicker := time.Tick(90 * time.Second)
+	healthTicker := time.NewTicker(30 * time.Second)
+	defer healthTicker.Stop()
 
 	for {
 		select {
 		case connectionEvent := <-c.eventChan:
 			c.handleEvent(connectionEvent)
+			c.updateConnectionHealth()
 		case <-c.sshChanged:
 			c.handleSSHChange()
+			c.updateConnectionHealth()
 		case <-c.wsTicker.C:
 			// skip if connect() is still running its own attempt
 			if !c.isConnectingNow() {
@@ -223,14 +225,22 @@ func (c *ConnectionManager) Start(ctx context.Context, serverOptions ServerOptio
 					c.startSSHServer()
 				}
 			}
-		case <-healthTicker:
-			_ = health.Update()
+		case <-healthTicker.C:
+			c.updateConnectionHealth()
 		case <-sigCtx.Done():
 			slog.Info("Shutting down", "cause", context.Cause(sigCtx))
 			c.reconnectWG.Wait()
 			return c.stop()
 		}
 	}
+}
+
+func (c *ConnectionManager) updateConnectionHealth() {
+	if c.getState() == Disconnected {
+		_ = health.CleanUp()
+		return
+	}
+	_ = health.Update()
 }
 
 func (c *ConnectionManager) handleSSHChange() {

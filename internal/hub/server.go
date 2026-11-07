@@ -15,6 +15,7 @@ type PublicAppInfo struct {
 	HUB_VERSION         string
 	PRODUCT_VERSION     string
 	PRODUCT_COMMIT      string
+	AGENT_IMAGE_TAG     string
 	HUB_URL             string
 	OAUTH_DISABLE_POPUP bool `json:"OAUTH_DISABLE_POPUP,omitzero"`
 }
@@ -63,6 +64,7 @@ func getPublicAppInfo(hub *Hub) PublicAppInfo {
 		HUB_VERSION:     vpsmonitor.Version,
 		PRODUCT_VERSION: vpsmonitor.BuildVersion,
 		PRODUCT_COMMIT:  vpsmonitor.BuildCommit,
+		AGENT_IMAGE_TAG: vpsmonitor.BuildImageTag,
 		HUB_URL:         hub.appURL,
 	}
 	if val, _ := utils.GetEnv("OAUTH_DISABLE_POPUP"); val == "true" {

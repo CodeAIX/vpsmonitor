@@ -4,10 +4,12 @@ import { agentCompose, agentRun } from "@/lib/deployment"
 import { DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu"
 
 export function copyDockerCompose(_port = "45876", key: string, token: string) {
- copyToClipboard(agentCompose(key, token, getHubURL(), globalThis.VPSMONITOR.PRODUCT_COMMIT, globalThis.VPSMONITOR.PRODUCT_VERSION))
+	const app = globalThis.VPSMONITOR
+	copyToClipboard(agentCompose(key, token, getHubURL(), app.PRODUCT_COMMIT, app.PRODUCT_VERSION, app.AGENT_IMAGE_TAG))
 }
 export function copyDockerRun(_port = "45876", key: string, token: string) {
- copyToClipboard(agentRun(key, token, getHubURL(), globalThis.VPSMONITOR.PRODUCT_COMMIT, globalThis.VPSMONITOR.PRODUCT_VERSION))
+	const app = globalThis.VPSMONITOR
+	copyToClipboard(agentRun(key, token, getHubURL(), app.PRODUCT_COMMIT, app.PRODUCT_VERSION, app.AGENT_IMAGE_TAG))
 }
 
 export interface DropdownItem {

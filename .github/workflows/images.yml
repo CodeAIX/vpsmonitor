@@ -1,0 +1,72 @@
+name: Publish versioned images
+
+on:
+  push:
+    tags: ['v[0-9]*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vpsmonitor-images-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish ${{ matrix.role }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        role: [hub, agent]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate release tag and source
+        shell: bash
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$ ]]; then
+            echo '::error::Expected a stable, alpha, beta, or rc version tag'
+            exit 1
+          fi
+          git fetch --no-tags --depth=1 origin refs/heads/main
+          if [[ "$(git rev-parse HEAD)" != "$(git rev-parse FETCH_HEAD)" ]]; then
+            echo '::error::The release tag must point to the current main commit'
+            exit 1
+          fi
+      - name: Publish Linux images and verify the index
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ROLE: ${{ matrix.role }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}-${ROLE}:${GITHUB_REF_NAME}"
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          unset GHCR_TOKEN
+          docker buildx create --name vpsmonitor-release --driver docker-container --use
+          extra=()
+          if [[ "$ROLE" == hub ]]; then
+            extra+=(--build-arg "IMAGE_TAG=$GITHUB_REF_NAME")
+          fi
+          docker buildx build --push --platform linux/amd64,linux/arm64 \
+            --provenance=mode=min --metadata-file "$RUNNER_TEMP/image.json" \
+            --build-arg "VERSION=${GITHUB_REF_NAME#v}" \
+            --build-arg "COMMIT=$(git rev-parse HEAD)" \
+            "${extra[@]}" \
+            --file "Dockerfile.$ROLE" --tag "$image" .
+          docker buildx imagetools inspect "$image" --raw | jq -e '
+            [.manifests[].platform | select(.os == "linux") | .architecture]
+            | sort == ["amd64", "arm64"]'
+          digest=$(jq -er '.["containerimage.digest"]' "$RUNNER_TEMP/image.json")
+          docker run --rm "${image%:*}@$digest" --version | grep -F -- "${GITHUB_REF_NAME#v}"
+          printf '%s @ %s\n' "$image" "$digest" >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove builder and credentials
+        if: always()
+        run: |
+          docker buildx rm vpsmonitor-release || true
+          docker logout ghcr.io

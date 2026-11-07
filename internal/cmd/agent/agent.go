@@ -85,7 +85,7 @@ func (opts *cmdOptions) parse() bool {
 		builder.WriteString(" [command] [flags]\n")
 		builder.WriteString("\nCommands:\n")
 		builder.WriteString("  fingerprint  View or reset the agent fingerprint\n")
-		builder.WriteString("  health       Check if the agent is running\n")
+		builder.WriteString("  health       Check whether the agent is connected to the Hub\n")
 		builder.WriteString("  update       Update to the latest version\n")
 		builder.WriteString("\nFlags:\n")
 		fmt.Print(builder.String())
