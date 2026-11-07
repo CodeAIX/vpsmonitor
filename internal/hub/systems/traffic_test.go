@@ -15,10 +15,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// One fixture ledger has one immutable creation identity across observations.
+var trafficFixtureCreatedAt = time.Now().UTC().AddDate(0, 0, -60).Unix()
+
 func trafficTestSnapshot() *traffic.Snapshot {
 	now := time.Now().UTC().Add(-2 * time.Minute)
 	s := &traffic.Snapshot{SchemaVersion: 1, Status: traffic.OK, ObservedAt: now.Unix(), Timebase: "utc", UTCValidFromDay: now.AddDate(0, 0, -60).Format(time.DateOnly), RefreshSeconds: 300, SaveIntervalSeconds: 300, CollectorVersion: "2.13"}
-	iface := traffic.InterfaceDaily{Name: "eth0", SourceCreatedAt: now.AddDate(0, 0, -60).Unix(), SourceUpdatedAt: now.Unix()}
+	iface := traffic.InterfaceDaily{Name: "eth0", SourceCreatedAt: trafficFixtureCreatedAt, SourceUpdatedAt: now.Unix()}
 	for day := 29; day >= 0; day-- {
 		iface.Days = append(iface.Days, traffic.DailyBucket{Day: now.AddDate(0, 0, -day).Format(time.DateOnly), RxBytes: 100, TxBytes: 200})
 	}
@@ -63,6 +66,7 @@ func TestTrafficPersistenceImportRepeatUpdateAndOrder(t *testing.T) {
 	require.Equal(t, int64(240), rows[29].GetInt64("tx_bytes"))
 	// Old data and old error states cannot overwrite newer state or counters.
 	old := trafficTestSnapshot()
+	old.ObservedAt = snapshot.ObservedAt - 1
 	require.NoError(t, SaveTrafficSnapshot(t.Context(), app, sys.Id, old))
 	old.Status = traffic.Timeout
 	old.ErrorCode = traffic.Timeout
