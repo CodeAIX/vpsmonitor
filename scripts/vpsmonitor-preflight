@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""Read-only Tailscale authorization and Agent ingress checks."""
+import argparse
+import json
+import subprocess
+import sys
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("role", choices=("hub", "agent"))
+    parser.add_argument("endpoint", nargs="?", help="Hub's dedicated Tailnet HTTP(S) origin")
+    parser.add_argument("--image", default="ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.2")
+    args = parser.parse_args()
+    if args.role == "agent" and not args.endpoint:
+        parser.error("agent requires the Hub Tailnet origin")
+
+    try:
+        result = subprocess.run(["tailscale", "status", "--json"], capture_output=True, timeout=8)
+    except FileNotFoundError:
+        sys.exit("Tailscale CLI is missing. Install Tailscale on this host and authorize the device.")
+    except subprocess.TimeoutExpired:
+        sys.exit("Cannot read Tailscale status. Check that the host daemon is running and accessible.")
+    try:
+        status = json.loads(result.stdout)
+        node = status.get("Self") or {}
+        authorized = (status.get("BackendState") == "Running" and node.get("InNetworkMap")
+                      and not node.get("Expired") and node.get("TailscaleIPs"))
+    except (ValueError, AttributeError):
+        sys.exit("Cannot read Tailscale status. Check that the host daemon is running and accessible.")
+    if not authorized:
+        sys.exit("Tailscale is not authorized or has no Tailnet IP. Sign in and approve this device in Tailscale.")
+    print("Host Tailscale is running and the device is authorized.", flush=True)
+    if args.role == "hub":
+        try:
+            version = subprocess.check_output(["docker", "version", "--format", "{{.Server.Version}}"],
+                                              text=True, stderr=subprocess.DEVNULL, timeout=8)
+            major = int(version.strip().split(".", 1)[0])
+        except (OSError, ValueError, subprocess.SubprocessError):
+            sys.exit("Cannot read the Hub Docker Engine version. Check Docker and your context.")
+        if major < 28:
+            sys.exit("Hub needs Docker Engine 28 or newer for loopback-only Agent port publishing.")
+        print("Hub Docker Engine supports loopback-only port publishing.")
+        return
+
+    # Exercise the real Agent networking and TLS without mounting the data or passing a token.
+    try:
+        result = subprocess.run([
+            "docker", "run", "--rm", "--network", "host", "--cap-drop", "ALL",
+            "--security-opt", "no-new-privileges", "-e", "HUB_URL=" + args.endpoint,
+            args.image, "preflight",
+        ])
+    except FileNotFoundError:
+        sys.exit("Docker CLI is missing. Install Docker Engine and Compose on this host.")
+    if result.returncode:
+        sys.exit("Agent preflight failed. Check the Hub Agent endpoint and TCP access in your Tailnet policy.")
+
+
+if __name__ == "__main__":
+    main()

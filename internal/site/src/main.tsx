@@ -15,6 +15,7 @@ import { alertManager } from "@/lib/alerts"
 import { isAdmin, pb, updateUserSettings } from "@/lib/api.ts"
 import { dynamicActivate, getLocale } from "@/lib/i18n"
 import {
+	$agentHubURL,
 	$authenticated,
 	$copyContent,
 	$direction,
@@ -46,6 +47,7 @@ const App = memo(() => {
 		// get general info for authenticated users, such as public key and version
 		pb.send<vpsmonitorInfo>("/api/vpsmonitor/info", {}).then((data) => {
 			$publicKey.set(data.key)
+			$agentHubURL.set(data.agent_hub_url ?? "")
 			// check for updates if enabled
 			if (data.cu && isAdmin()) {
 				pb.send<UpdateInfo>("/api/vpsmonitor/update", {}).then($newVersion.set)

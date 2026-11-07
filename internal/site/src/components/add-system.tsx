@@ -22,7 +22,6 @@ import { cn, generateToken, tokenMap } from "@/lib/utils"
 import type { SystemRecord } from "@/types"
 import {
 	copyDockerCompose,
-	copyDockerRun,
 	type DropdownItem,
 	InstallDropdown,
 } from "./install-dropdowns"
@@ -164,6 +163,11 @@ export const SystemDialog = ({ setOpen, system }: { setOpen: (open: boolean) => 
 									.
 								</Trans>
 							</p>
+							{globalThis.VPSMONITOR.AGENT_IMAGE_TAG && (
+								<p className="mt-2 text-muted-foreground">
+									<Trans>Install and authorize Tailscale on the VPS, then run the Agent preflight.</Trans>
+								</p>
+							)}
 						</TabsContent>
 					</div>
 				</DialogDescription>
@@ -212,15 +216,13 @@ export const SystemDialog = ({ setOpen, system }: { setOpen: (open: boolean) => 
 								<CopyButton
 									text={t({ message: "Copy docker compose", context: "Button to copy docker compose file content" })}
 									onClick={async () =>
-										copyDockerCompose(isUnixSocket ? hostValue : port.current?.value, publicKey, token)
+										copyDockerCompose(publicKey, token)
 									}
 									icon={<DockerIcon className="size-4 -me-0.5" />}
 									dropdownItems={[
 										{
-											text: t({ message: "Copy docker run", context: "Button to copy docker run command" }),
-											onClick: async () =>
-												copyDockerRun(isUnixSocket ? hostValue : port.current?.value, publicKey, token),
-											icons: [DockerIcon],
+											text: t`Manual setup instructions`,
+											url: "https://github.com/CodeAIX/vpsmonitor/blob/main/docs/DEPLOY.md",
 										},
 									]}
 								/>

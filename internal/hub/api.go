@@ -197,8 +197,10 @@ func (h *Hub) registerApiRoutes(se *core.ServeEvent) error {
 	// get config.yml content
 	apiAuth.GET("/config-yaml", config.GetYamlConfig).BindFunc(requireAdminRole)
 	apiAuth.POST("/config-yaml/import", config.ImportYamlConfig).BindFunc(requireAdminRole)
-	// handle agent websocket connection
-	apiNoAuth.GET("/agent-connect", h.handleAgentConnect)
+	// The shared listener is only used by untagged development fixtures.
+	if h.agentURL == "" && !vpsmonitor.RequiresTailnet() {
+		apiNoAuth.GET("/agent-connect", h.handleAgentConnect)
+	}
 	// get, create, or delete universal tokens (POST keeps tokens out of URLs; GET is kept for legacy clients)
 	apiAuth.GET("/universal-token", h.handleUniversalToken).BindFunc(excludeReadOnlyRole)
 	apiAuth.POST("/universal-token", h.handleUniversalToken).BindFunc(excludeReadOnlyRole)
@@ -233,12 +235,14 @@ func (h *Hub) getInfo(e *core.RequestEvent) error {
 		CheckUpdate  bool   `json:"cu"`
 		BuildVersion string `json:"product_version"`
 		BuildCommit  string `json:"product_commit"`
+		AgentURL     string `json:"agent_hub_url,omitempty"`
 	}
 	info := infoResponse{
 		Key:          h.pubKey,
 		Version:      vpsmonitor.Version,
 		BuildVersion: vpsmonitor.BuildVersion,
 		BuildCommit:  vpsmonitor.BuildCommit,
+		AgentURL:     h.agentURL,
 	}
 	if optIn, _ := utils.GetEnv("CHECK_UPDATES"); optIn == "true" && !vpsmonitor.IsVPSMonitor {
 		info.CheckUpdate = true

@@ -13,6 +13,7 @@ import (
 	"github.com/CodeAIX/vpsmonitor/agent"
 	"github.com/CodeAIX/vpsmonitor/agent/health"
 	"github.com/CodeAIX/vpsmonitor/agent/utils"
+	"github.com/CodeAIX/vpsmonitor/internal/tailnet"
 	"github.com/spf13/pflag"
 	"golang.org/x/crypto/ssh"
 )
@@ -41,6 +42,13 @@ func (opts *cmdOptions) parse() bool {
 
 	// Subcommands that don't require any pflag parsing
 	switch subcommand {
+	case "preflight":
+		endpoint, _ := utils.GetEnv("HUB_URL")
+		if err := tailnet.Probe(context.Background(), endpoint); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Tailnet route, TCP and Hub Agent ingress are reachable")
+		return true
 	case "health":
 		err := health.Check()
 		if err != nil {
@@ -86,6 +94,7 @@ func (opts *cmdOptions) parse() bool {
 		builder.WriteString("\nCommands:\n")
 		builder.WriteString("  fingerprint  View or reset the agent fingerprint\n")
 		builder.WriteString("  health       Check whether the agent is connected to the Hub\n")
+		builder.WriteString("  preflight    Check HUB_URL over the Tailnet without a token\n")
 		builder.WriteString("  update       Update to the latest version\n")
 		builder.WriteString("\nFlags:\n")
 		fmt.Print(builder.String())

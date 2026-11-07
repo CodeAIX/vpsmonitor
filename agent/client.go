@@ -20,6 +20,7 @@ import (
 	"github.com/CodeAIX/vpsmonitor/agent/utils"
 	"github.com/CodeAIX/vpsmonitor/internal/common"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/system"
+	"github.com/CodeAIX/vpsmonitor/internal/tailnet"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/lxzan/gws"
@@ -82,9 +83,16 @@ func newWebSocketClient(agent *Agent) (client *WebSocketClient, err error) {
 
 	client = &WebSocketClient{}
 
-	client.hubURL, err = url.Parse(hubURLStr)
-	if err != nil || client.hubURL.Host == "" {
-		return nil, fmt.Errorf("invalid HUB_URL %q: must include scheme and host (e.g. http://hub.example.com:8090)", hubURLStr)
+	if vpsmonitor.RequiresTailnet() {
+		client.hubURL, err = tailnet.Origin(hubURLStr)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		client.hubURL, err = url.Parse(hubURLStr)
+		if err != nil || client.hubURL.Host == "" {
+			return nil, fmt.Errorf("invalid HUB_URL: must include scheme and host (e.g. http://hub.example.com:8090)")
+		}
 	}
 	// get registration token
 	client.token, err = getToken()
@@ -218,10 +226,10 @@ func (client *WebSocketClient) getOptions() *gws.ClientOption {
 	} else {
 		client.hubURL.Scheme = "ws"
 	}
-	client.hubURL.Path = path.Join(client.hubURL.Path, "api/vpsmonitor/agent-connect")
+	client.hubURL.Path = path.Join(client.hubURL.Path, tailnet.ConnectPath)
 
 	// make sure VPSMONITOR_AGENT_ALL_PROXY works (GWS only checks ALL_PROXY)
-	if val := os.Getenv("VPSMONITOR_AGENT_ALL_PROXY"); val != "" {
+	if val := os.Getenv("VPSMONITOR_AGENT_ALL_PROXY"); val != "" && !vpsmonitor.RequiresTailnet() {
 		os.Setenv("ALL_PROXY", val)
 	}
 
@@ -255,7 +263,11 @@ func (client *WebSocketClient) getOptions() *gws.ClientOption {
 type agentDialer struct{ ctx context.Context }
 
 func (d agentDialer) Dial(network, addr string) (net.Conn, error) {
-	conn, err := proxy.Dial(d.ctx, network, addr)
+	dial := proxy.Dial
+	if vpsmonitor.RequiresTailnet() {
+		dial = tailnet.DialContext
+	}
+	conn, err := dial(d.ctx, network, addr)
 	if err != nil {
 		return nil, err
 	}

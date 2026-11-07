@@ -1,11 +1,13 @@
 name: vpsmonitor-hub
 services:
   hub:
-    image: ghcr.io/codeaix/vpsmonitor-hub:${VPSMONITOR_VERSION:-v0.1.0-beta.1}
+    image: ghcr.io/codeaix/vpsmonitor-hub:${VPSMONITOR_VERSION:-v0.1.0-beta.2}
     restart: unless-stopped
     ports:
       - "${HUB_BIND:-127.0.0.1}:${HUB_PORT:-8090}:8090"
+      - "127.0.0.1:${AGENT_LOCAL_PORT:-18091}:8091"
     environment:
       APP_URL: ${HUB_URL:-http://127.0.0.1:8090}
+      AGENT_HUB_URL: ${AGENT_HUB_URL:?Set the dedicated Hub address on your Tailnet}
     volumes:
       - ./hub_data:/vpsmonitor_data

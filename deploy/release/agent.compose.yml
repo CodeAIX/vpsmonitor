@@ -1,7 +1,7 @@
 name: vpsmonitor-agent
 services:
   agent:
-    image: ghcr.io/codeaix/vpsmonitor-agent:${VPSMONITOR_VERSION:-v0.1.0-beta.1}
+    image: ghcr.io/codeaix/vpsmonitor-agent:${VPSMONITOR_VERSION:-v0.1.0-beta.2}
     restart: unless-stopped
     network_mode: host
     cap_drop: [ALL]
@@ -9,7 +9,7 @@ services:
     environment:
       KEY: ${KEY:?Set the new Hub public key}
       TOKEN: ${TOKEN:?Set the new Agent registration token}
-      HUB_URL: ${HUB_URL:?Set a Hub URL reachable from the VPS}
+      HUB_URL: ${HUB_URL:?Set the dedicated Hub address on your Tailnet}
       DISABLE_SSH: "true"
       VPSMONITOR_NETWORK_SCOPE: host
       VPSMONITOR_TRAFFIC_INTERFACE: ${TRAFFIC_INTERFACE:-auto}

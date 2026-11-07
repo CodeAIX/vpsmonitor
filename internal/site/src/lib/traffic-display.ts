@@ -19,6 +19,13 @@ export function trafficProgress(value: number | null | undefined) {
 	return value == null || !Number.isFinite(value) ? null : Math.min(100, Math.max(0, value))
 }
 
+// The API end date is exclusive and starts at midnight UTC.
+export function billingDaysRemaining(end: string, now = Date.now()) {
+	const days = (Date.parse(`${end}T00:00:00Z`) - now) / 86_400_000
+	if (!Number.isFinite(days) || days <= 0) return null
+	return days < 1 ? 0 : Math.ceil(days)
+}
+
 /** Shares of the used fill, so exceeding quota preserves the Rx/Tx ratio. */
 export function trafficSplit(rx: number | null, tx: number | null, mode: "tx" | "rx_tx") {
 	if (tx == null || !Number.isSafeInteger(tx) || tx < 0) return null

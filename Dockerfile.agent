@@ -5,8 +5,8 @@ RUN go mod download
 RUN mkdir -m 0700 /agent-data
 COPY . .
 ARG TARGETOS TARGETARCH
-ARG VERSION=0.1.0-dev COMMIT=unknown
-RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X github.com/CodeAIX/vpsmonitor.BuildVersion=${VERSION} -X github.com/CodeAIX/vpsmonitor.BuildCommit=${COMMIT}" -o /agent ./internal/cmd/agent
+ARG VERSION=0.1.0-dev COMMIT=unknown IMAGE_TAG
+RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X github.com/CodeAIX/vpsmonitor.BuildVersion=${VERSION} -X github.com/CodeAIX/vpsmonitor.BuildCommit=${COMMIT} -X github.com/CodeAIX/vpsmonitor.BuildImageTag=${IMAGE_TAG}" -o /agent ./internal/cmd/agent
 
 FROM alpine:3.24@sha256:3f4d6b32e26703c6082839234f43769d5046b3ac7c910033911d1e71d8cd630a
 ARG VERSION=0.1.0-dev COMMIT=unknown

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { agentCompose, agentRun, sourceRef } from "../src/lib/deployment"
+import { agentCompose, sourceRef } from "../src/lib/deployment"
 
 test("Docker installation contains native host accounting and persistence without vnStat setup", () => {
 	const commit = "a".repeat(40)
@@ -14,13 +14,10 @@ test("Docker installation contains native host accounting and persistence withou
 
 test("source refs cannot inject build arguments", () => {
 	expect(sourceRef("main; touch /tmp/test")).toBe("main")
-	expect(agentRun("key", "token", "https://monitor.example.com", "bad ref")).toContain("#main'")
+	expect(agentCompose("key", "token", "https://monitor.example.com", "bad ref")).toContain("#main\n")
 })
 
-test("copy commands quote a literal token rather than executable shell syntax", () => {
-	const token = "token'$(printf dangerous)"
-	const command = agentRun("key", token, "https://monitor.example.com", "unknown")
-	expect(command).toContain(`TOKEN='token'"'"'$(printf dangerous)'`)
+test("Compose keeps a literal multiline credential", () => {
 	const yaml = agentCompose("key", "line\nsecond", "https://monitor.example.com", "unknown")
 	expect(yaml).toContain('TOKEN: "line\\nsecond"')
 })
@@ -31,14 +28,13 @@ test("Compose interpolation cannot substitute a secret value from the operator e
 })
 
 test("a release Hub generates pull-only Agent instructions pinned to its matching tag", () => {
-	const args = ["key", "token", "https://monitor.example.com", "unknown", "0.1.0-beta.1", "v0.1.0-beta.1"] as const
+	const args = ["key", "token", "http://100.65.1.2:8091", "unknown", "0.1.0-beta.2", "v0.1.0-beta.2"] as const
 	const yaml = agentCompose(...args)
-	const command = agentRun(...args)
-	expect(yaml).toContain("image: ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.1")
+	expect(yaml).toContain("image: ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.2")
+	expect(yaml).toContain('HUB_URL: "http://100.65.1.2:8091"')
+	expect(yaml).toContain("./agent_data:/var/lib/vpsmonitor-agent")
 	expect(yaml).toContain("network_mode: host")
 	expect(yaml).not.toContain("build:")
-	expect(command).toStartWith("docker run ")
-	expect(command).toEndWith("ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.1")
-	const malformed = agentRun("key", "token", "https://monitor.example.com", "unknown", "0.1.0-beta.1", "v0.1.0; echo injected")
+	const malformed = agentCompose("key", "token", "https://monitor.example.com", "unknown", "0.1.0-beta.2", "v0.1.0; echo injected")
 	expect(malformed).not.toContain("echo injected")
 })

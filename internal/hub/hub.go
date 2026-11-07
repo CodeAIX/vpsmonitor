@@ -6,18 +6,21 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"strings"
 	"time"
 
+	"github.com/CodeAIX/vpsmonitor"
 	"github.com/CodeAIX/vpsmonitor/internal/alerts"
 	"github.com/CodeAIX/vpsmonitor/internal/hub/config"
 	"github.com/CodeAIX/vpsmonitor/internal/hub/heartbeat"
 	"github.com/CodeAIX/vpsmonitor/internal/hub/systems"
 	"github.com/CodeAIX/vpsmonitor/internal/hub/utils"
 	"github.com/CodeAIX/vpsmonitor/internal/records"
+	"github.com/CodeAIX/vpsmonitor/internal/tailnet"
 	"github.com/CodeAIX/vpsmonitor/internal/users"
 
 	"github.com/pocketbase/pocketbase"
@@ -29,14 +32,15 @@ import (
 type Hub struct {
 	core.App
 	*alerts.AlertManager
-	um     *users.UserManager
-	rm     *records.RecordManager
-	sm     *systems.SystemManager
-	hb     *heartbeat.Heartbeat
-	hbStop chan struct{}
-	pubKey string
-	signer ssh.Signer
-	appURL string
+	um       *users.UserManager
+	rm       *records.RecordManager
+	sm       *systems.SystemManager
+	hb       *heartbeat.Heartbeat
+	hbStop   chan struct{}
+	pubKey   string
+	signer   ssh.Signer
+	appURL   string
+	agentURL string
 }
 
 // NewHub creates a new Hub instance with default configuration
@@ -75,7 +79,22 @@ func onAfterBootstrapAndMigrations(app core.App, fn func(app core.App) error) er
 
 // StartHub sets up event handlers and starts the PocketBase server
 func (h *Hub) StartHub() error {
+	var agentIngress *http.Server
+	defer func() {
+		if agentIngress != nil {
+			_ = agentIngress.Close()
+		}
+	}()
 	h.App.OnServe().BindFunc(func(e *core.ServeEvent) error {
+		if raw, _ := utils.GetEnv("AGENT_HUB_URL"); raw != "" {
+			origin, err := tailnet.Origin(raw)
+			if err != nil {
+				return fmt.Errorf("AGENT_HUB_URL: %w", err)
+			}
+			h.agentURL = origin.String()
+		} else if vpsmonitor.RequiresTailnet() {
+			return errors.New("set AGENT_HUB_URL to the dedicated Hub address on your Tailnet")
+		}
 		// sync systems with config
 		if err := config.SyncSystems(e); err != nil {
 			return err
@@ -97,6 +116,13 @@ func (h *Hub) StartHub() error {
 		// start system updates
 		if err := h.sm.Initialize(); err != nil {
 			return err
+		}
+		if h.agentURL != "" {
+			var err error
+			agentIngress, err = h.startAgentIngress()
+			if err != nil {
+				return err
+			}
 		}
 		// start heartbeat if configured
 		if h.hb != nil {

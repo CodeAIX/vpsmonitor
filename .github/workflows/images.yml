@@ -49,15 +49,11 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
           unset GHCR_TOKEN
           docker buildx create --name vpsmonitor-release --driver docker-container --use
-          extra=()
-          if [[ "$ROLE" == hub ]]; then
-            extra+=(--build-arg "IMAGE_TAG=$GITHUB_REF_NAME")
-          fi
           docker buildx build --push --platform linux/amd64,linux/arm64 \
             --provenance=mode=min --metadata-file "$RUNNER_TEMP/image.json" \
             --build-arg "VERSION=${GITHUB_REF_NAME#v}" \
             --build-arg "COMMIT=$(git rev-parse HEAD)" \
-            "${extra[@]}" \
+            --build-arg "IMAGE_TAG=$GITHUB_REF_NAME" \
             --file "Dockerfile.$ROLE" --tag "$image" .
           docker buildx imagetools inspect "$image" --raw | jq -e '
             [.manifests[].platform | select(.os == "linux") | .architecture]

@@ -49,7 +49,7 @@ func (a *Agent) prepareSSHServer(opts ServerOptions) (*ssh.Server, net.Listener,
 	a.serverMu.Lock()
 	defer a.serverMu.Unlock()
 
-	if disableSSH, _ := utils.GetEnv("DISABLE_SSH"); disableSSH == "true" {
+	if disableSSH, _ := utils.GetEnv("DISABLE_SSH"); vpsmonitor.RequiresTailnet() || disableSSH == "true" {
 		return nil, nil, errors.New("SSH disabled")
 	}
 	if a.server != nil {

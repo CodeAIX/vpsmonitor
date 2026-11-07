@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/CodeAIX/vpsmonitor"
 	"github.com/CodeAIX/vpsmonitor/agent/health"
 	"github.com/CodeAIX/vpsmonitor/agent/utils"
 	"github.com/gliderlabs/ssh"
@@ -171,7 +172,7 @@ func (c *ConnectionManager) Start(ctx context.Context, serverOptions ServerOptio
 	wsClient, err := newWebSocketClient(c.agent)
 	if err != nil {
 		var caCertErr *caCertFileError
-		if errors.As(err, &caCertErr) || errors.Is(err, errInvalidHubHeaders) {
+		if vpsmonitor.RequiresTailnet() || errors.As(err, &caCertErr) || errors.Is(err, errInvalidHubHeaders) {
 			return err
 		}
 		disableSSH, _ := utils.GetEnv("DISABLE_SSH")
@@ -397,7 +398,7 @@ func (c *ConnectionManager) startSSHServer() {
 		c.mu.Unlock()
 		return
 	}
-	if disabled, _ := utils.GetEnv("DISABLE_SSH"); disabled == "true" {
+	if disabled, _ := utils.GetEnv("DISABLE_SSH"); vpsmonitor.RequiresTailnet() || disabled == "true" {
 		c.mu.Unlock()
 		return
 	}

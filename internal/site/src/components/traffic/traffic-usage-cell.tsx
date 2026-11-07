@@ -1,6 +1,6 @@
 import { t } from "@lingui/core/macro"
 import type { TrafficView } from "@/types"
-import { trafficBytes, trafficProgress, trafficSplit, trafficTimestamp } from "@/lib/traffic-display"
+import { billingDaysRemaining, trafficBytes, trafficProgress, trafficSplit, trafficTimestamp } from "@/lib/traffic-display"
 import { decimalString } from "@/lib/utils"
 
 export function trafficStatusLabel(status: string) {
@@ -101,7 +101,13 @@ export function TrafficUsageCell({
 		]
 			.filter(Boolean)
 			.join("\n")
-		return <CompactTrafficMeter description={tooltip} percent={percent} split={split} />
+		const days = billingDaysRemaining(item.period_end_exclusive)
+		const countdown = item.settings.enabled === false || !item.period_end_exclusive ? undefined
+			: days == null ? t`Refreshing billing period`
+				: days === 0 ? t`Less than 1 day left`
+					: days === 1 ? t`1 day left` : t`${days} days left`
+		return <CompactTrafficMeter description={tooltip} percent={percent} split={split} countdown={countdown}
+			incomplete={item.coverage === "partial" && item.settings.enabled !== false} />
 	}
 	return (
 		<div className="min-w-0 max-w-52 text-xs" title={description}>
@@ -143,16 +149,20 @@ function CompactTrafficMeter({
 	description,
 	percent,
 	split,
+	countdown,
+	incomplete,
 }: {
 	description: string
 	percent?: number | null
 	split?: { rx: number; tx: number } | null
+	countdown?: string
+	incomplete?: boolean
 }) {
 	const width = trafficProgress(percent)
 	const value = width == null ? "—" : `${decimalString(percent!, percent! >= 10 ? 1 : 2)}%`
 	return (
 		<div
-			className="flex gap-2 items-center tabular-nums tracking-tight w-full min-w-0"
+			className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-0.5 tabular-nums tracking-tight w-full min-w-0"
 			title={description}
 			aria-label={description}
 		>
@@ -173,6 +183,12 @@ function CompactTrafficMeter({
 					</span>
 				)}
 			</span>
+			{(countdown || incomplete) && (
+				<div className="col-span-2 flex flex-wrap gap-x-1.5 text-[0.6875rem] leading-tight text-muted-foreground">
+					{countdown && <span>{countdown}</span>}
+					{incomplete && <span className="text-amber-700 dark:text-amber-400">{t`Incomplete period`}</span>}
+				</div>
+			)}
 		</div>
 	)
 }

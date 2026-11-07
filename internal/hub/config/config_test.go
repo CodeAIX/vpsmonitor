@@ -95,7 +95,7 @@ func TestConfigSyncWithTokens(t *testing.T) {
 			description: "New system should use token from config",
 		},
 		{
-			name: "existing system without token in config (preserve existing)",
+			name: "existing system keeps identity when YAML supplies a different token",
 			setupFunc: func() (string, *core.Record, *core.Record) {
 				// Create existing system and fingerprint
 				system, err := tests.CreateRecord(testHub.App, "systems", map[string]any{
@@ -116,9 +116,10 @@ func TestConfigSyncWithTokens(t *testing.T) {
     host: "preserve.example.com"
     port: 45876
     users:
-      - "admin@example.com"`,
+      - "admin@example.com"
+    token: "older-token-from-yaml"`,
 			expectToken: "preserve-token-999",
-			description: "Existing system should preserve original token when config doesn't specify one",
+			description: "Existing system should preserve its original token",
 		},
 	}
 
@@ -209,6 +210,12 @@ func TestConfigMigrationScenario(t *testing.T) {
 	migrationToken := "migration-generated-token-123"
 	existingFingerprint, err := createConfigTestFingerprint(testHub.App, existingSystem.Id, migrationToken, "existing-fingerprint-from-agent")
 	require.NoError(t, err)
+	unlisted, err := tests.CreateRecord(testHub.App, "systems", map[string]any{
+		"name": "unlisted-server", "host": "unlisted.example.com", "port": 45876, "users": []string{user.Id},
+	})
+	require.NoError(t, err)
+	unlistedFingerprint, err := createConfigTestFingerprint(testHub.App, unlisted.Id, "unlisted-token", "unlisted-fingerprint")
+	require.NoError(t, err)
 
 	// User exports config BEFORE this update (so no token field in YAML)
 	oldConfigYAML := `systems:
@@ -226,6 +233,10 @@ func TestConfigMigrationScenario(t *testing.T) {
 	event := &core.ServeEvent{App: testHub.App}
 	err = config.SyncSystems(event)
 	require.NoError(t, err)
+	_, err = testHub.FindRecordById("systems", unlisted.Id)
+	require.NoError(t, err, "a partial startup config must not delete unlisted devices")
+	_, err = testHub.FindRecordById("fingerprints", unlistedFingerprint.Id)
+	require.NoError(t, err, "unlisted device identity must survive sync")
 
 	// Verify the original token is preserved
 	updatedFingerprint, err := testHub.FindRecordById("fingerprints", existingFingerprint.Id)

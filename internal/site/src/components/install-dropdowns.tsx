@@ -1,15 +1,18 @@
 import { memo } from "react"
-import { copyToClipboard, getHubURL } from "@/lib/utils"
-import { agentCompose, agentRun } from "@/lib/deployment"
+import { t } from "@lingui/core/macro"
+import { copyToClipboard, getAgentHubURL } from "@/lib/utils"
+import { agentCompose } from "@/lib/deployment"
 import { DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu"
+import { toast } from "./ui/use-toast"
 
-export function copyDockerCompose(_port = "45876", key: string, token: string) {
+export function copyDockerCompose(key: string, token: string) {
 	const app = globalThis.VPSMONITOR
-	copyToClipboard(agentCompose(key, token, getHubURL(), app.PRODUCT_COMMIT, app.PRODUCT_VERSION, app.AGENT_IMAGE_TAG))
-}
-export function copyDockerRun(_port = "45876", key: string, token: string) {
-	const app = globalThis.VPSMONITOR
-	copyToClipboard(agentRun(key, token, getHubURL(), app.PRODUCT_COMMIT, app.PRODUCT_VERSION, app.AGENT_IMAGE_TAG))
+	const hub = getAgentHubURL()
+	if (!hub || !key || !token) {
+		toast({ description: t`Agent installation settings are not ready`, variant: "destructive" })
+		return
+	}
+	copyToClipboard(agentCompose(key, token, hub, app.PRODUCT_COMMIT, app.PRODUCT_VERSION, app.AGENT_IMAGE_TAG))
 }
 
 export interface DropdownItem {

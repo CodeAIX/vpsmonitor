@@ -678,6 +678,7 @@ export interface vpsmonitorInfo {
 	key: string // public key
 	v: string // version
 	cu: boolean // check updates
+	agent_hub_url?: string
 }
 
 export interface UpdateInfo {

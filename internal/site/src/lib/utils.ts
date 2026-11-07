@@ -8,7 +8,7 @@ import { twMerge } from "tailwind-merge"
 import { toast } from "@/components/ui/use-toast"
 import type { ChartTimeData, FingerprintRecord, SemVer, SystemRecord } from "@/types"
 import { HourFormat, Unit } from "./enums"
-import { $copyContent, $userSettings } from "./stores"
+import { $agentHubURL, $copyContent, $userSettings } from "./stores"
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs))
@@ -357,7 +357,10 @@ export const generateToken = () => {
 }
 
 /** Get the hub URL from the global VPSMONITOR object */
-export const getHubURL = () => globalThis.VPSMONITOR?.HUB_URL || window.location.origin
+export function getAgentHubURL() {
+	const app = globalThis.VPSMONITOR
+	return $agentHubURL.get() || (app?.AGENT_IMAGE_TAG ? "" : app?.HUB_URL || window.location.origin)
+}
 
 /** Map of system IDs to their corresponding tokens (used to avoid fetching in add-system dialog) */
 export const tokenMap = new Map<SystemRecord["id"], FingerprintRecord["token"]>()

@@ -3,6 +3,7 @@ WORKDIR /app/internal/site
 COPY internal/site/package.json internal/site/package-lock.json ./
 RUN npm ci --ignore-scripts
 COPY internal/site/ ./
+COPY deploy/release/agent.compose.yml /app/deploy/release/agent.compose.yml
 RUN npm run build
 
 FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine@sha256:fa3d596898d9f126af7c01d14ee7597bab3f39cccf392ef36b69fe77cd681f18 AS build
@@ -21,7 +22,7 @@ LABEL org.opencontainers.image.source="https://github.com/CodeAIX/vpsmonitor" or
 COPY --from=build /hub /hub
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 VOLUME ["/vpsmonitor_data"]
-EXPOSE 8090
+EXPOSE 8090 8091
 COPY LICENSE NOTICE /usr/share/licenses/vpsmonitor/
 ENTRYPOINT ["/hub"]
 CMD ["serve", "--http=0.0.0.0:8090", "--dir=/vpsmonitor_data"]

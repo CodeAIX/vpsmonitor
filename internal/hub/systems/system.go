@@ -73,7 +73,7 @@ var errSSHDisabled = errors.New("no WebSocket connection and SSH is disabled")
 // sshFallbackDisabled reports whether DISABLE_SSH is set on the hub.
 func sshFallbackDisabled() bool {
 	disableSSH, _ := utils.GetEnv("DISABLE_SSH")
-	return disableSSH == "true"
+	return vpsmonitor.RequiresTailnet() || disableSSH == "true"
 }
 
 // GetStatus returns the current monitoring status.

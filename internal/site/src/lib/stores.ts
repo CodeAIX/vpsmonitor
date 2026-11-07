@@ -29,6 +29,7 @@ export const $alerts = map<AlertMap>({})
 
 /** SSH public key */
 export const $publicKey = atom("")
+export const $agentHubURL = atom("")
 
 /** New version info if an update is available, otherwise undefined */
 export const $newVersion = atom<UpdateInfo | undefined>()

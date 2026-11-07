@@ -44,14 +44,19 @@ func SyncSystems(e *core.ServeEvent) error {
 	var config config
 	err = yaml.Unmarshal(configData, &config)
 	if err != nil {
-		return fmt.Errorf("failed to parse config.yml: %v", err)
+		return fmt.Errorf("failed to parse config.yml")
 	}
 
 	if len(config.Systems) == 0 {
 		log.Println("No systems defined in config.yml.")
 		return nil
 	}
+	return h.RunInTransaction(func(tx core.App) error {
+		return syncSystems(tx, config.Systems)
+	})
+}
 
+func syncSystems(h core.App, configured []systemConfig) error {
 	var firstUser *core.Record
 
 	// Create a map of email to user ID
@@ -68,8 +73,8 @@ func SyncSystems(e *core.ServeEvent) error {
 	}
 
 	// add default settings for systems if not defined in config
-	for i := range config.Systems {
-		system := &config.Systems[i]
+	for i := range configured {
+		system := &configured[i]
 		if system.Port == 0 {
 			system.Port = 45876
 		}
@@ -97,15 +102,16 @@ func SyncSystems(e *core.ServeEvent) error {
 	}
 
 	// Create a map of existing systems
-	existingSystemsMap := make(map[string]*core.Record)
+	type systemKey struct{ name, host, port string }
+	existingSystemsMap := make(map[systemKey]*core.Record)
 	for _, system := range existingSystems {
-		key := system.GetString("name") + system.GetString("host") + system.GetString("port")
+		key := systemKey{system.GetString("name"), system.GetString("host"), system.GetString("port")}
 		existingSystemsMap[key] = system
 	}
 
 	// Process systems from config
-	for _, sysConfig := range config.Systems {
-		key := sysConfig.Name + sysConfig.Host + cast.ToString(sysConfig.Port)
+	for _, sysConfig := range configured {
+		key := systemKey{sysConfig.Name, sysConfig.Host, cast.ToString(sysConfig.Port)}
 		if existingSystem, ok := existingSystemsMap[key]; ok {
 			// Update existing system
 			existingSystem.Set("name", sysConfig.Name)
@@ -115,14 +121,6 @@ func SyncSystems(e *core.ServeEvent) error {
 				return err
 			}
 
-			// Only update token if one is specified in config, otherwise preserve existing token
-			if sysConfig.Token != "" {
-				if err := updateFingerprintToken(h, existingSystem.Id, sysConfig.Token); err != nil {
-					return err
-				}
-			}
-
-			delete(existingSystemsMap, key)
 		} else {
 			// Create new system
 			systemsCollection, err := h.FindCollectionByNameOrId("systems")
@@ -150,17 +148,11 @@ func SyncSystems(e *core.ServeEvent) error {
 			if err := createFingerprintRecord(h, newSystem.Id, token); err != nil {
 				return err
 			}
+			existingSystemsMap[key] = newSystem
 		}
 	}
 
-	// Delete systems not in config (and their fingerprint records will cascade delete)
-	for _, system := range existingSystemsMap {
-		if err := h.Delete(system); err != nil {
-			return err
-		}
-	}
-
-	log.Println("Systems synced with config.yml")
+	log.Println("Systems synced with config.yml. Existing identities and unlisted systems retained.")
 	return nil
 }
 
@@ -276,20 +268,6 @@ func getUserEmailMap(h core.App, userIDs []string) (map[string]string, error) {
 	}
 
 	return userEmailMap, nil
-}
-
-// Helper function to update or create fingerprint token for an existing system
-func updateFingerprintToken(app core.App, systemID, token string) error {
-	// Try to find existing fingerprint record
-	fingerprint, err := app.FindFirstRecordByFilter("fingerprints", "system = {:system}", dbx.Params{"system": systemID})
-	if err != nil {
-		// If no fingerprint record exists, create one
-		return createFingerprintRecord(app, systemID, token)
-	}
-
-	// Update existing fingerprint record with new token (keep existing fingerprint)
-	fingerprint.Set("token", token)
-	return app.Save(fingerprint)
 }
 
 // Helper function to create a new fingerprint record for a system

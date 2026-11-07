@@ -1,6 +1,7 @@
-import { describe, expect, mock, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import { renderToStaticMarkup } from "react-dom/server"
 import {
+	billingDaysRemaining,
 	trafficBytes,
 	trafficProgress,
 	trafficQuota,
@@ -10,11 +11,19 @@ import {
 } from "../src/lib/traffic-display"
 import type { TrafficView } from "../src/types"
 
-mock.module("@lingui/core/macro", () => ({ t: (strings: TemplateStringsArray) => strings.join("") }))
+mock.module("@lingui/core/macro", () => ({
+	t: (strings: TemplateStringsArray, ...values: unknown[]) => strings.reduce((text, part, i) => text + part + (values[i] ?? ""), ""),
+}))
 mock.module("@/lib/utils", () => ({ decimalString: (value: number, digits: number) => value.toFixed(digits) }))
 const { TrafficUsageCell } = await import("../src/components/traffic/traffic-usage-cell")
 
 describe("traffic date and byte display", () => {
+	test("counts down to the exclusive UTC billing boundary", () => {
+		expect(billingDaysRemaining("2028-03-01", Date.parse("2028-02-28T23:59:00Z"))).toBe(2)
+		expect(billingDaysRemaining("2028-03-01", Date.parse("2028-02-29T08:00:00+08:00"))).toBe(1)
+		expect(billingDaysRemaining("2028-03-01", Date.parse("2028-02-29T23:59:00Z"))).toBe(0)
+		expect(billingDaysRemaining("2028-03-01", Date.parse("2028-03-01T00:00:00Z"))).toBeNull()
+	})
 	test("keeps UTC date boundaries across local offsets and leap days", () => {
 		expect(trafficRange(1, new Date("2026-11-06T00:30:00+08:00"))).toEqual({ from: "2026-11-05", to: "2026-11-06" })
 		expect(trafficRange(2, new Date("2028-03-01T12:00:00Z"))).toEqual({ from: "2028-02-29", to: "2028-03-02" })
@@ -62,6 +71,8 @@ test("over-quota display retains 120% but clamps the actual progress bar", () =>
 })
 
 describe("compact traffic meter", () => {
+	beforeEach(() => spyOn(Date, "now").mockReturnValue(Date.parse("2026-11-06T00:00:00Z")))
+	afterEach(() => mock.restore())
 	const item = {
 		used_bytes: 120,
 		rx_bytes: 30,
@@ -80,7 +91,7 @@ describe("compact traffic meter", () => {
 		last_success_at: "2026-11-06T05:00:00Z",
 	} as TrafficView
 
-	test("keeps both direction shares when over quota, with details confined to the tooltip", () => {
+	test("keeps both direction shares and shows the billing countdown and coverage", () => {
 		const html = renderToStaticMarkup(<TrafficUsageCell compact item={item} />)
 		expect(html).toContain('aria-valuenow="100"')
 		expect(html).toContain("width:100%")
@@ -90,7 +101,7 @@ describe("compact traffic meter", () => {
 		expect(html).toContain("bg-chart-1")
 		expect(html).toContain("2026-10-15 → 2026-11-15")
 		expect(html).toContain("Offline · last known")
-		expect(html.replace(/<[^>]*>/g, "")).toBe("120.0%")
+		expect(html.replace(/<[^>]*>/g, "")).toBe("120.0%9 days leftIncomplete period")
 	})
 
 	test("shows only outbound usage for tx billing and preserves null versus zero", () => {
@@ -104,7 +115,7 @@ describe("compact traffic meter", () => {
 			<TrafficUsageCell compact item={{ ...item, rx_bytes: 0, tx_bytes: 0, used_bytes: 0, percent: 0 }} />
 		)
 		expect(zero).toContain('aria-valuenow="0"')
-		expect(zero.replace(/<[^>]*>/g, "")).toBe("0.00%")
+		expect(zero.replace(/<[^>]*>/g, "")).toStartWith("0.00%")
 		for (const data of [
 			undefined,
 			{ ...item, used_bytes: null },
@@ -112,7 +123,7 @@ describe("compact traffic meter", () => {
 			{ ...item, settings: { ...item.settings, enabled: false } },
 		]) {
 			const html = renderToStaticMarkup(<TrafficUsageCell compact item={data} />)
-			expect(html.replace(/<[^>]*>/g, "")).toBe("—")
+			expect(html.replace(/<[^>]*>/g, "")).toStartWith("—")
 			expect(html).not.toContain('role="progressbar"')
 		}
 	})

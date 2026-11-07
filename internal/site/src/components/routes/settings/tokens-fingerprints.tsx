@@ -14,7 +14,6 @@ import {
 import { memo, useEffect, useMemo, useState } from "react"
 import {
 	copyDockerCompose,
-	copyDockerRun,
 	type DropdownItem,
 	InstallDropdown,
 } from "@/components/install-dropdowns"
@@ -36,7 +35,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/components/ui/use-toast"
 import { isReadOnlyUser, pb } from "@/lib/api"
 import { $publicKey } from "@/lib/stores"
-import { cn, copyToClipboard, generateToken, getHubURL, tokenMap } from "@/lib/utils"
+import { cn, copyToClipboard, generateToken, tokenMap } from "@/lib/utils"
 import type { FingerprintRecord } from "@/types"
 
 const pbFingerprintOptions = {
@@ -245,11 +244,9 @@ const SectionUniversalToken = memo(() => {
 const ActionsButtonUniversalToken = memo(({ token, checked }: { token: string; checked: boolean }) => {
 	const { t } = useLingui()
 	const publicKey = $publicKey.get()
-	const port = "45876"
 
 	const dropdownItems: DropdownItem[] = [
-  {text: t({message: "Copy docker compose", context: "Button to copy docker compose file content"}), onClick: () => copyDockerCompose(port, publicKey, token), icons: [DockerIcon]},
-  {text: t({message: "Copy docker run", context: "Button to copy docker run command"}), onClick: () => copyDockerRun(port, publicKey, token), icons: [DockerIcon]},
+  {text: t({message: "Copy docker compose", context: "Button to copy docker compose file content"}), onClick: () => copyDockerCompose(publicKey, token), icons: [DockerIcon]},
   {text: t`Manual setup instructions`, url: "https://github.com/CodeAIX/vpsmonitor/blob/main/docs/DEPLOY.md", icons: [ExternalLinkIcon]},
  ]
 	return (
@@ -362,10 +359,6 @@ async function updateFingerprint(fingerprint: FingerprintRecord, rotateToken = f
 }
 
 const ActionsButtonTable = memo(({ fingerprint }: { fingerprint: FingerprintRecord }) => {
-	const envVar = `HUB_URL=${getHubURL()}\nTOKEN=${fingerprint.token}`
-	const copyEnv = () => copyToClipboard(envVar)
-	const copyYaml = () => copyToClipboard(envVar.replaceAll("=", ": "))
-
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -377,13 +370,9 @@ const ActionsButtonTable = memo(({ fingerprint }: { fingerprint: FingerprintReco
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
-				<DropdownMenuItem onClick={copyYaml}>
+				<DropdownMenuItem onClick={() => copyDockerCompose($publicKey.get(), fingerprint.token)}>
 					<CopyIcon className="me-2.5 size-4" />
-					<Trans>Copy YAML</Trans>
-				</DropdownMenuItem>
-				<DropdownMenuItem onClick={copyEnv}>
-					<CopyIcon className="me-2.5 size-4" />
-					<Trans context="Environment variables">Copy env</Trans>
+					<Trans context="Button to copy docker compose file content">Copy docker compose</Trans>
 				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onSelect={() => updateFingerprint(fingerprint, true)}>

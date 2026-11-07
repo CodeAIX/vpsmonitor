@@ -3117,3 +3117,21 @@ msgstr "是"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "您的用戶設置已更新。"
+
+msgid "Agent installation settings are not ready"
+msgstr "Agent 安裝設定尚未就緒"
+
+msgid "Refreshing billing period"
+msgstr "正在更新帳期"
+
+msgid "Less than 1 day left"
+msgstr "不足 1 天"
+
+msgid "1 day left"
+msgstr "剩 1 天"
+
+msgid "{days} days left"
+msgstr "剩 {days} 天"
+
+msgid "Install and authorize Tailscale on the VPS, then run the Agent preflight."
+msgstr "在 VPS 安裝並授權 Tailscale，再執行 Agent 部署預檢。"
