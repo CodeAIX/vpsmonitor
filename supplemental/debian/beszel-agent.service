@@ -1,0 +1,28 @@
+[Unit]
+Description=vpsmonitor Agent Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Environment="PORT=45876"
+# Port number can be overridden in vpsmonitor-agent.conf if needed
+EnvironmentFile=/etc/vpsmonitor-agent.conf
+ExecStart=/usr/bin/vpsmonitor-agent
+User=vpsmonitor
+Restart=on-failure
+StateDirectory=vpsmonitor-agent
+
+# Security/sandboxing settings
+KeyringMode=private
+LockPersonality=yes
+ProtectClock=yes
+ProtectHome=read-only
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectSystem=strict
+PrivateTmp=yes
+RemoveIPC=yes
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

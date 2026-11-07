@@ -1,0 +1,5 @@
+Template: vpsmonitor-agent/key
+Type: string
+Description: SSH public key provided by vpsmonitor hub:
+ If you leave this blank, you will need to configure it in 
+ /etc/vpsmonitor-agent.conf before starting vpsmonitor.

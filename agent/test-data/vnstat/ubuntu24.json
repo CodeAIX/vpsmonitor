@@ -1,0 +1,49 @@
+{
+  "vnstatversion": "2.12",
+  "jsonversion": "2",
+  "interfaces": [
+    {
+      "name": "iface0",
+      "alias": "",
+      "created": {
+        "date": {
+          "year": 2026,
+          "month": 11,
+          "day": 6
+        },
+        "timestamp": 1793936088
+      },
+      "updated": {
+        "date": {
+          "year": 2026,
+          "month": 11,
+          "day": 6
+        },
+        "time": {
+          "hour": 3,
+          "minute": 34
+        },
+        "timestamp": 1793936096
+      },
+      "traffic": {
+        "total": {
+          "rx": 0,
+          "tx": 0
+        },
+        "day": [
+          {
+            "id": 1,
+            "date": {
+              "year": 2026,
+              "month": 11,
+              "day": 6
+            },
+            "timestamp": 1793923200,
+            "rx": 0,
+            "tx": 0
+          }
+        ]
+      }
+    }
+  ]
+}

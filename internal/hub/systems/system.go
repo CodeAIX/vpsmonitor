@@ -1,0 +1,1173 @@
+package systems
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"hash/fnv"
+	"math/rand"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/CodeAIX/vpsmonitor/internal/common"
+	"github.com/CodeAIX/vpsmonitor/internal/hub/transport"
+	"github.com/CodeAIX/vpsmonitor/internal/hub/utils"
+	"github.com/CodeAIX/vpsmonitor/internal/hub/ws"
+
+	"github.com/CodeAIX/vpsmonitor/internal/entities/container"
+	"github.com/CodeAIX/vpsmonitor/internal/entities/monitor"
+	"github.com/CodeAIX/vpsmonitor/internal/entities/smart"
+	"github.com/CodeAIX/vpsmonitor/internal/entities/system"
+	"github.com/CodeAIX/vpsmonitor/internal/entities/systemd"
+	"github.com/CodeAIX/vpsmonitor/internal/entities/zfs"
+
+	"github.com/CodeAIX/vpsmonitor"
+
+	"github.com/blang/semver"
+	"github.com/fxamacker/cbor/v2"
+	"github.com/lxzan/gws"
+	"github.com/pocketbase/dbx"
+	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/security"
+	"github.com/pocketbase/pocketbase/tools/types"
+	"golang.org/x/crypto/ssh"
+)
+
+type System struct {
+	historySyncing atomic.Bool
+	Id             string                         `db:"id"`
+	Host           string                         `db:"host"`
+	Port           string                         `db:"port"`
+	Status         string                         `db:"status"` // Use GetStatus/swapStatus after publishing the system.
+	statusMu       sync.RWMutex                   // Protects Status and exchanges used by alert transitions.
+	manager        *SystemManager                 // Manager that this system belongs to
+	sshMu          sync.Mutex                     // Protects sshTransport creation
+	sshTransport   *transport.SSHTransport        // Owns the SSH connection to the agent
+	data           *system.CombinedData           // system data from agent
+	ctx            context.Context                // Context for stopping the updater
+	cancel         context.CancelFunc             // Stops and removes system from updater
+	WsConn         *ws.WsConn                     // Handler for agent WebSocket connection
+	agentVersion   atomic.Pointer[semver.Version] // Use getAgentVersion/setAgentVersion
+	updateTicker   *time.Ticker                   // Ticker for updating the system
+	detailsFetched atomic.Bool                    // True if static system details have been fetched and saved
+	smartFetching  atomic.Bool                    // True if SMART devices are currently being fetched
+	smartInterval  time.Duration                  // Interval for periodic SMART data updates
+	zfsFetching    atomic.Bool                    // True if ZFS pools are currently being fetched
+	zfsInterval    time.Duration                  // Interval for periodic ZFS detail data updates
+
+	// A fresh connection needs a full monitor configuration sync.
+	monitorsNeedSync atomic.Bool
+	// Serialize persistence from scheduled updates and resumes through commit.
+	recordsMu sync.Mutex
+	// Protected by recordsMu; realtime reads don't consume probes.
+	lastSavedMonitorProbe map[string]int64
+}
+
+// errSSHDisabled is returned instead of dialing SSH when DISABLE_SSH is set on the hub.
+var errSSHDisabled = errors.New("no WebSocket connection and SSH is disabled")
+
+// sshFallbackDisabled reports whether DISABLE_SSH is set on the hub.
+func sshFallbackDisabled() bool {
+	disableSSH, _ := utils.GetEnv("DISABLE_SSH")
+	return disableSSH == "true"
+}
+
+// GetStatus returns the current monitoring status.
+func (sys *System) GetStatus() string {
+	sys.statusMu.RLock()
+	defer sys.statusMu.RUnlock()
+	return sys.Status
+}
+
+// swapStatus updates the status and returns the previous value as one operation.
+func (sys *System) swapStatus(status string) string {
+	sys.statusMu.Lock()
+	defer sys.statusMu.Unlock()
+	previous := sys.Status
+	sys.Status = status
+	return previous
+}
+
+func (sm *SystemManager) NewSystem(systemId string) *System {
+	system := &System{
+		Id:   systemId,
+		data: &system.CombinedData{},
+	}
+	system.ctx, system.cancel = system.getContext(sm.ctx)
+	return system
+}
+
+// StartUpdater starts the system updater.
+// It first fetches the data from the agent then updates the records.
+// If the data is not found or the system is down, it sets the system down.
+func (sys *System) StartUpdater() {
+	// Channel that can be used to set the system down. Currently only used to
+	// allow a short delay for reconnection after websocket connection is closed.
+	var downChan chan struct{}
+
+	// Add random jitter to first WebSocket connection to prevent
+	// clustering if all agents are started at the same time.
+	// SSH connections during hub startup are already staggered.
+	var jitter <-chan time.Time
+	if sys.WsConn != nil {
+		jitter = getJitter()
+		// use the websocket connection's down channel to set the system down
+		downChan = sys.WsConn.DownChan
+	} else {
+		// if the system does not have a websocket connection, wait before updating
+		// to allow the agent to connect via websocket (makes sure fingerprint is set).
+		if !waitForContext(sys.ctx, 11*time.Second) {
+			return
+		}
+
+	}
+
+	// update immediately if system is not paused (only for ws connections)
+	// we'll wait a minute before connecting via SSH to prioritize ws connections
+	if sys.GetStatus() != paused && sys.ctx.Err() == nil {
+		if err := sys.update(); err != nil {
+			_ = sys.setDown(err)
+		}
+	}
+
+	sys.updateTicker = time.NewTicker(time.Duration(interval) * time.Millisecond)
+	// Go 1.23+ will automatically stop the ticker when the system is garbage collected, however we seem to need this or testing/synctest will block even if calling runtime.GC()
+	defer sys.updateTicker.Stop()
+
+	for {
+		select {
+		case <-sys.ctx.Done():
+			return
+		case <-sys.updateTicker.C:
+			if err := sys.update(); err != nil {
+				_ = sys.setDown(err)
+			}
+		case <-downChan:
+			sys.WsConn = nil
+			downChan = nil
+			_ = sys.setDown(nil)
+		case <-jitter:
+			sys.updateTicker.Reset(time.Duration(interval) * time.Millisecond)
+			if err := sys.update(); err != nil {
+				_ = sys.setDown(err)
+			}
+		}
+	}
+}
+
+// update updates the system data and records.
+func (sys *System) update() error {
+	if sys.GetStatus() == paused {
+		sys.handlePaused()
+		return nil
+	}
+	options := common.DataRequestOptions{
+		CacheTimeMs: uint16(interval),
+	}
+	// fetch system details if not already fetched
+	if !sys.detailsFetched.Load() {
+		options.IncludeDetails = true
+	}
+
+	data, err := sys.fetchDataFromAgent(options)
+	if err != nil {
+		// Ping so a slow agent's connection survives until the next poll. Ping()
+		// extends the read deadline without needing a reply (see ws.deadline).
+		// Once the agent has been silent for maxAgentSilence, stop pinging and let
+		// the deadline close what is likely a dead connection.
+		if sys.WsConn != nil && sys.WsConn.IsConnected() && sys.WsConn.TimeSinceLastMessage() < maxAgentSilence {
+			_ = sys.WsConn.Ping()
+		}
+		return err
+	}
+
+	// ensure deprecated fields from older agents are migrated to current fields
+	migrateDeprecatedFields(data, !sys.detailsFetched.Load())
+	sys.data = data
+
+	// create system records
+	_, err = sys.createRecords(data)
+	if err == nil {
+		sys.startHistorySync(data.History)
+	}
+	if err == nil && data.Traffic != nil && sys.manager.traffic != nil {
+		sys.manager.traffic.enqueue(sys.Id, data.Traffic)
+	}
+
+	// if details were included and fetched successfully, mark details as fetched and update smart interval if set by agent
+	if err == nil && data.Details != nil {
+		sys.detailsFetched.Store(true)
+		// update smart interval if it's set on the agent side
+		if data.Details.SmartInterval > 0 {
+			sys.smartInterval = data.Details.SmartInterval
+			sys.manager.hub.Logger().Info("SMART interval updated from agent details", "system", sys.Id, "interval", sys.smartInterval.String())
+			// make sure we reset expiration of lastFetch to remain as long as the new smart interval
+			// to prevent premature expiration leading to new fetch if interval is different.
+			sys.manager.smartFetchMap.UpdateExpiration(sys.Id, sys.smartInterval+time.Minute)
+		}
+		// update zfs interval if it's set on the agent side
+		if data.Details.ZfsInterval > 0 {
+			sys.zfsInterval = data.Details.ZfsInterval
+			sys.manager.hub.Logger().Info("ZFS interval updated from agent details", "system", sys.Id, "interval", sys.zfsInterval.String())
+			sys.manager.zfsFetchMap.UpdateExpiration(sys.Id, sys.zfsInterval+time.Minute)
+		}
+	}
+
+	// Fetch and save SMART devices when system first comes online or at intervals
+	if backgroundSmartFetchEnabled() && sys.detailsFetched.Load() {
+		if sys.smartInterval <= 0 {
+			sys.smartInterval = time.Hour
+		}
+		if sys.shouldFetchSmart() && sys.smartFetching.CompareAndSwap(false, true) {
+			sys.manager.hub.Logger().Info("SMART fetch", "system", sys.Id, "interval", sys.smartInterval.String())
+			go func() {
+				defer sys.smartFetching.Store(false)
+				_ = sys.FetchAndSaveSmartDevices()
+			}()
+		}
+	}
+
+	// Fetch and save ZFS pool details when system first comes online or at intervals
+	if backgroundZfsFetchEnabled() && sys.detailsFetched.Load() && sys.supportsZfsData() {
+		if sys.zfsInterval <= 0 {
+			sys.zfsInterval = time.Hour
+		}
+		if sys.shouldFetchZfs() && sys.zfsFetching.CompareAndSwap(false, true) {
+			sys.manager.hub.Logger().Info("ZFS fetch", "system", sys.Id, "interval", sys.zfsInterval.String())
+			go func() {
+				defer sys.zfsFetching.Store(false)
+				_ = sys.FetchAndSaveZfsPools(false)
+			}()
+		}
+	}
+
+	return err
+}
+
+func (sys *System) handlePaused() {
+	if sys.WsConn == nil {
+		// if the system is paused and there's no websocket connection, remove the system
+		_ = sys.manager.RemoveSystem(sys.Id)
+	} else {
+		// Send a ping to the agent to keep the connection alive if the system is paused
+		if err := sys.WsConn.Ping(); err != nil {
+			sys.manager.hub.Logger().Warn("Failed to ping agent", "system", sys.Id, "err", err)
+			_ = sys.manager.RemoveSystem(sys.Id)
+		}
+	}
+}
+
+// createRecords updates the system record and adds system_stats and container_stats records
+func (sys *System) createRecords(data *system.CombinedData) (*core.Record, error) {
+	sys.recordsMu.Lock()
+	defer sys.recordsMu.Unlock()
+
+	systemRecord, err := sys.getRecord(sys.manager.hub)
+	if err != nil {
+		return nil, err
+	}
+	hub := sys.manager.hub
+	savedMonitorProbes := make(map[string]int64)
+	err = hub.RunInTransaction(func(txApp core.App) error {
+		// add system_stats record
+		systemStatsCollection, err := txApp.FindCachedCollectionByNameOrId("system_stats")
+		if err != nil {
+			return err
+		}
+		systemStatsRecord := core.NewRecord(systemStatsCollection)
+		systemStatsRecord.Set("system", systemRecord.Id)
+		systemStatsRecord.Set("stats", data.Stats)
+		systemStatsRecord.Set("type", "1m")
+		if err := txApp.SaveNoValidate(systemStatsRecord); err != nil {
+			return err
+		}
+
+		// add containers and container_stats records
+		if len(data.Containers) > 0 {
+			if data.Containers[0].Id != "" {
+				if err := createContainerRecords(txApp, data.Containers, sys.Id); err != nil {
+					return err
+				}
+			}
+			containerStatsCollection, err := txApp.FindCachedCollectionByNameOrId("container_stats")
+			if err != nil {
+				return err
+			}
+			containerStatsRecord := core.NewRecord(containerStatsCollection)
+			containerStatsRecord.Set("system", systemRecord.Id)
+			containerStatsRecord.Set("stats", data.Containers)
+			containerStatsRecord.Set("type", "1m")
+			if err := txApp.SaveNoValidate(containerStatsRecord); err != nil {
+				return err
+			}
+		}
+
+		// Update systemd service records when the agent reports a fresh snapshot.
+		// The length check keeps snapshots from older agents working, while the
+		// explicit marker lets newer agents report that a fresh snapshot is empty.
+		if data.SystemdServicesUpdated || len(data.SystemdServices) > 0 {
+			if err := createSystemdStatsRecords(txApp, data.SystemdServices, sys.Id); err != nil {
+				return err
+			}
+		}
+
+		// add system details record
+		if data.Details != nil {
+			if err := createSystemDetailsRecord(txApp, data.Details, sys.Id); err != nil {
+				return err
+			}
+			// sync display name with hostname if enabled (details are fetched once per agent connection)
+			if syncNames, _ := utils.GetEnv("SYNC_SYSTEM_NAMES"); syncNames == "true" && data.Details.Hostname != "" {
+				systemRecord.Set("name", data.Details.Hostname)
+			}
+		}
+
+		if data.Monitors != nil {
+			if err := sys.updateNetworkMonitorsRecords(txApp, data.Monitors, savedMonitorProbes); err != nil {
+				return err
+			}
+		}
+
+		if err := sys.syncZfsPoolHealth(txApp, data.Stats.ZfsPools); err != nil {
+			return err
+		}
+
+		// update system record (do this last because it triggers alerts and we need above records to be inserted first)
+		systemRecord.Set("status", up)
+		// Distinguish an idle GPU from a system without GPU data (#2312)
+		info := struct {
+			system.Info
+			GpuPct *float64 `json:"g,omitempty"`
+		}{Info: data.Info}
+		if len(data.Stats.GPUData) > 0 {
+			info.GpuPct = &data.Info.GpuPct
+		}
+		systemRecord.Set("info", info)
+		if err := txApp.SaveNoValidate(systemRecord); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	// Publish only successful inserts after the entire transaction commits.
+	if err == nil && len(savedMonitorProbes) > 0 {
+		if sys.lastSavedMonitorProbe == nil {
+			sys.lastSavedMonitorProbe = savedMonitorProbes
+		} else {
+			for id, timestamp := range savedMonitorProbes {
+				sys.lastSavedMonitorProbe[id] = timestamp
+			}
+		}
+	}
+	// A non-nil report includes cached results for all remaining monitors.
+	if err == nil && data.Monitors != nil {
+		for id := range sys.lastSavedMonitorProbe {
+			if _, exists := data.Monitors[id]; !exists {
+				delete(sys.lastSavedMonitorProbe, id)
+			}
+		}
+	}
+	if err == nil {
+		if alertErr := hub.HandleNetworkMonitorAlerts(systemRecord, data.Monitors); alertErr != nil {
+			hub.Logger().Error("Error handling network monitor alerts", "err", alertErr)
+		}
+	}
+	return systemRecord, err
+}
+
+func createSystemDetailsRecord(app core.App, data *system.Details, systemId string) error {
+	collectionName := "system_details"
+	params := dbx.Params{
+		"id":       systemId,
+		"system":   systemId,
+		"hostname": data.Hostname,
+		"kernel":   data.Kernel,
+		"cores":    data.Cores,
+		"threads":  data.Threads,
+		"sockets":  data.Sockets,
+		"cpu":      data.CpuModel,
+		"os":       data.Os,
+		"os_name":  data.OsName,
+		"arch":     data.Arch,
+		"memory":   data.MemoryTotal,
+		"podman":   data.Podman,
+		"updated":  time.Now().UTC(),
+	}
+	result, err := app.DB().Update(collectionName, params, dbx.HashExp{"id": systemId}).Execute()
+	rowsAffected, _ := result.RowsAffected()
+	if err != nil || rowsAffected == 0 {
+		_, err = app.DB().Insert(collectionName, params).Execute()
+	}
+	return err
+}
+
+func createSystemdStatsRecords(app core.App, data []*systemd.Service, systemId string) error {
+	if len(data) == 0 {
+		_, err := app.DB().NewQuery(
+			"DELETE FROM systemd_services WHERE system = {:system}",
+		).Bind(dbx.Params{"system": systemId}).Execute()
+		return err
+	}
+	// shared params for all records
+	params := dbx.Params{
+		"system":  systemId,
+		"updated": time.Now().UTC().UnixMilli(),
+	}
+
+	valueStrings := make([]string, 0, len(data))
+	for i, service := range data {
+		// Agent payloads can contain null entries. Reject the snapshot before
+		// executing any queries so existing service records remain intact.
+		if service == nil {
+			return fmt.Errorf("null systemd service at index %d", i)
+		}
+		suffix := fmt.Sprintf("%d", i)
+		valueStrings = append(valueStrings, fmt.Sprintf("({:id%[1]s}, {:system}, {:name%[1]s}, {:state%[1]s}, {:sub%[1]s}, {:cpu%[1]s}, {:cpuPeak%[1]s}, {:memory%[1]s}, {:memPeak%[1]s}, {:updated})", suffix))
+		params["id"+suffix] = MakeStableHashId(systemId, service.Name)
+		params["name"+suffix] = service.Name
+		params["state"+suffix] = service.State
+		params["sub"+suffix] = service.Sub
+		params["cpu"+suffix] = service.Cpu
+		params["cpuPeak"+suffix] = service.CpuPeak
+		params["memory"+suffix] = service.Mem
+		params["memPeak"+suffix] = service.MemPeak
+	}
+	queryString := fmt.Sprintf(
+		"INSERT INTO systemd_services (id, system, name, state, sub, cpu, cpuPeak, memory, memPeak, updated) VALUES %s ON CONFLICT(id) DO UPDATE SET system = excluded.system, name = excluded.name, state = excluded.state, sub = excluded.sub, cpu = excluded.cpu, cpuPeak = excluded.cpuPeak, memory = excluded.memory, memPeak = excluded.memPeak, updated = excluded.updated",
+		strings.Join(valueStrings, ","),
+	)
+	if _, err := app.DB().NewQuery(queryString).Bind(params).Execute(); err != nil {
+		return err
+	}
+	// Remove services the agent no longer reports. Every row in this batch shares the
+	// same updated timestamp, so anything older no longer exists on the host. Left in
+	// place these rows survive until the retention sweep and surface inconsistently
+	// across the dashboard, the services table, and alerts.
+	_, err := app.DB().NewQuery(
+		"DELETE FROM systemd_services WHERE system = {:system} AND updated < {:updated}",
+	).Bind(dbx.Params{"system": systemId, "updated": params["updated"]}).Execute()
+	return err
+}
+
+func (sys *System) updateNetworkMonitorsRecords(app core.App, monitorResults map[string]monitor.Result, savedProbes map[string]int64) error {
+	if len(monitorResults) == 0 {
+		return nil
+	}
+	systemId := sys.Id
+	const monitorCollectionName = "network_monitors"
+
+	// If realtime updates are active, we save via PocketBase records to trigger realtime events.
+	// Otherwise we can do a more efficient direct update via SQL
+	realtimeActive := utils.RealtimeActiveForCollection(app, monitorCollectionName, func(filterQuery string) bool {
+		return !strings.Contains(filterQuery, "system") || strings.Contains(filterQuery, systemId)
+	})
+
+	now := time.Now().UTC()
+	nowMilli := now.UnixMilli()
+	nowString := now.Format(types.DefaultDateLayout)
+	var db dbx.Builder
+	var updateQuery *dbx.Query
+	if !realtimeActive {
+		db = app.DB()
+		monitorFields := []string{"res", "resMin1h", "resMax1h", "resAvg1h", "loss1h", "updated"}
+		setClauses := make([]string, len(monitorFields))
+		for i, f := range monitorFields {
+			setClauses[i] = fmt.Sprintf("%s={:%s}", f, f)
+		}
+		// Results omit certInfo unless it changed, so keep the stored value.
+		setClauses = append(setClauses, "certInfo=COALESCE({:certInfo}, certInfo)")
+		queryString := fmt.Sprintf("UPDATE %s SET %s WHERE id={:id} AND system={:system}", monitorCollectionName, strings.Join(setClauses, ", "))
+		updateQuery = db.NewQuery(queryString)
+	}
+
+	// Results are keyed by agent-supplied IDs. Record history only for monitors
+	// this system owns, as confirmed by the update below
+	owned := make(map[string]struct{}, len(monitorResults))
+
+	// update network_monitors records
+	for id, result := range monitorResults {
+		monitorData := map[string]any{
+			"id":       id,
+			"system":   systemId,
+			"res":      result.AvgResponse,
+			"resAvg1h": result.AvgResponse1h,
+			"resMin1h": result.MinResponse1h,
+			"resMax1h": result.MaxResponse1h,
+			"loss1h":   result.PacketLoss1h,
+			"updated":  nowString,
+		}
+		var err error
+		switch realtimeActive {
+		case true:
+			var record *core.Record
+			record, err = app.FindRecordById(monitorCollectionName, id)
+			if err == nil {
+				if record.GetString("system") != systemId {
+					continue
+				}
+				if result.Cert != nil {
+					monitorData["certInfo"] = result.Cert
+				}
+				record.Load(monitorData)
+				err = app.SaveNoValidate(record)
+			}
+		default:
+			monitorData["certInfo"] = nil
+			if result.Cert != nil {
+				var cert []byte
+				if cert, err = json.Marshal(result.Cert); err == nil {
+					monitorData["certInfo"] = string(cert)
+				}
+			}
+			if err == nil {
+				var res sql.Result
+				// Zero rows means the monitor is foreign or no longer exists.
+				if res, err = updateQuery.Bind(dbx.Params(monitorData)).Execute(); err == nil {
+					if n, _ := res.RowsAffected(); n == 0 {
+						continue
+					}
+				}
+			}
+		}
+		if err != nil {
+			app.Logger().Warn("Failed to update monitor", "system", systemId, "monitor", id, "err", err)
+			continue
+		}
+		owned[id] = struct{}{}
+	}
+
+	// handle stats collection — one record per monitor
+	const statsCollectionName = "network_monitor_stats"
+
+	var statsCollection *core.Collection
+	if realtimeActive {
+		statsCollection, _ = app.FindCachedCollectionByNameOrId(statsCollectionName)
+	}
+
+	for monitorId, result := range monitorResults {
+		if _, ok := owned[monitorId]; !ok {
+			continue
+		}
+		// Compare identity, not ordering, so agent clock changes don't stall writes.
+		if result.LastProbeAt == sys.lastSavedMonitorProbe[monitorId] {
+			continue
+		}
+		statsRecordData := map[string]any{
+			"system":        systemId,
+			"monitor":       monitorId,
+			"type":          "1m",
+			"created":       nowMilli,
+			"res_min":       result.MinResponse,
+			"res_max":       result.MaxResponse,
+			"total_count":   result.TotalCount,
+			"success_count": result.SuccessCount,
+			"res_sum":       result.ResponseSum,
+		}
+		var err error
+		switch realtimeActive {
+		case true:
+			record := core.NewRecord(statsCollection)
+			record.Load(statsRecordData)
+			err = app.SaveNoValidate(record)
+		default:
+			statsRecordData["id"] = security.PseudorandomStringWithAlphabet(10, core.DefaultIdAlphabet)
+			_, err = db.Insert(statsCollectionName, dbx.Params(statsRecordData)).Execute()
+		}
+		if err != nil {
+			app.Logger().Error("Failed to update monitor stats", "system", systemId, "monitor", monitorId, "err", err)
+		} else {
+			savedProbes[monitorId] = result.LastProbeAt
+		}
+	}
+
+	return nil
+}
+
+// createContainerRecords creates container records
+func createContainerRecords(app core.App, data []*container.Stats, systemId string) error {
+	if len(data) == 0 {
+		return nil
+	}
+	// shared params for all records
+	params := dbx.Params{
+		"system":  systemId,
+		"updated": time.Now().UTC().UnixMilli(),
+	}
+	valueStrings := make([]string, 0, len(data))
+	for i, container := range data {
+		suffix := fmt.Sprintf("%d", i)
+		valueStrings = append(valueStrings, fmt.Sprintf("({:id%[1]s}, {:system}, {:name%[1]s}, {:image%[1]s}, {:ports%[1]s}, {:status%[1]s}, {:health%[1]s}, {:cpu%[1]s}, {:memory%[1]s}, {:net%[1]s}, {:updateAvailable%[1]s}, {:updated})", suffix))
+		params["id"+suffix] = container.Id
+		params["name"+suffix] = container.Name
+		params["image"+suffix] = container.Image
+		params["ports"+suffix] = container.Ports
+		params["status"+suffix] = container.Status
+		params["health"+suffix] = container.Health
+		params["cpu"+suffix] = container.Cpu
+		params["memory"+suffix] = container.Mem
+		netBytes := container.Bandwidth[0] + container.Bandwidth[1]
+		if netBytes == 0 {
+			netBytes = uint64((container.NetworkSent + container.NetworkRecv) * 1024 * 1024)
+		}
+		params["net"+suffix] = netBytes
+		params["updateAvailable"+suffix] = container.UpdateAvailable
+	}
+	queryString := fmt.Sprintf(
+		"INSERT INTO containers (id, system, name, image, ports, status, health, cpu, memory, net, updatable, updated) VALUES %s ON CONFLICT(id) DO UPDATE SET system = excluded.system, name = excluded.name, image = excluded.image, ports = excluded.ports, status = excluded.status, health = excluded.health, cpu = excluded.cpu, memory = excluded.memory, net = excluded.net, updatable = excluded.updatable, updated = excluded.updated",
+		strings.Join(valueStrings, ","),
+	)
+	_, err := app.DB().NewQuery(queryString).Bind(params).Execute()
+	return err
+}
+
+// getRecord retrieves the system record from the database.
+// If the record is not found, it removes the system from the manager.
+// Other errors, like a query timing out while the hub is stalled, leave the
+// system in place so the updater retries on the next tick (issue #2544).
+func (sys *System) getRecord(app core.App) (*core.Record, error) {
+	record, err := app.FindRecordById("systems", sys.Id)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+	if err != nil || record == nil {
+		_ = sys.manager.RemoveSystem(sys.Id)
+		if err == nil {
+			err = fmt.Errorf("system record %s not found", sys.Id)
+		}
+		return nil, err
+	}
+	return record, nil
+}
+
+// HasUser checks if the given user is in the system's users list.
+// Returns true if SHARE_ALL_SYSTEMS is enabled (any authenticated user can access any system).
+func (sys *System) HasUser(app core.App, user *core.Record) bool {
+	if user == nil {
+		return false
+	}
+	if v, _ := utils.GetEnv("SHARE_ALL_SYSTEMS"); v == "true" {
+		return true
+	}
+	var recordData = struct {
+		Users string
+	}{}
+	err := app.DB().NewQuery("SELECT users FROM systems WHERE id={:id}").
+		Bind(dbx.Params{"id": sys.Id}).
+		One(&recordData)
+	if err != nil || recordData.Users == "" {
+		return false
+	}
+	return strings.Contains(recordData.Users, user.Id)
+}
+
+// setDown marks a system as down in the database.
+// It takes the original error that caused the system to go down and returns any error
+// encountered during the process of updating the system status.
+// It is a no-op if the system's context has been cancelled.
+func (sys *System) setDown(originalError error) error {
+	if status := sys.GetStatus(); status == down || status == paused {
+		return nil
+	}
+	// the updater can race shutdown, and the app may already be disposed by the
+	// time we get here, so don't touch the database once the context is cancelled
+	if sys.ctx != nil && sys.ctx.Err() != nil {
+		return sys.ctx.Err()
+	}
+	record, err := sys.getRecord(sys.manager.hub)
+	if err != nil {
+		return err
+	}
+	if originalError != nil {
+		sys.manager.hub.Logger().Error("System down", "system", record.GetString("name"), "err", originalError)
+	}
+	sys.detailsFetched.Store(false)
+	record.Set("status", down)
+	return sys.manager.hub.SaveNoValidate(record)
+}
+
+func (sys *System) getContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	if sys.ctx == nil {
+		sys.ctx, sys.cancel = context.WithCancel(ctx)
+	}
+	return sys.ctx, sys.cancel
+}
+
+// request sends a request to the agent, trying WebSocket first, then SSH.
+// This is the unified request method that uses the transport abstraction.
+func (sys *System) request(ctx context.Context, action common.WebSocketAction, req any, dest any) error {
+	// Try WebSocket first
+	if sys.WsConn != nil && sys.WsConn.IsConnected() {
+		wsTransport := transport.NewWebSocketTransport(sys.WsConn)
+		if err := wsTransport.Request(ctx, action, req, dest); err == nil {
+			return nil
+		} else if !shouldFallbackToSSH(err) {
+			return err
+		} else if shouldCloseWebSocket(err) {
+			sys.closeWebSocketConnection()
+		}
+	}
+
+	// Fall back to SSH if WebSocket fails
+	sshTransport, err := sys.getSSHTransport()
+	if err != nil {
+		return err
+	}
+	return sshTransport.RequestWithRetry(ctx, action, req, dest, 1)
+}
+
+func shouldFallbackToSSH(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return true
+	}
+	if errors.Is(err, gws.ErrConnClosed) {
+		return true
+	}
+	return errors.Is(err, transport.ErrWebSocketNotConnected)
+}
+
+func shouldCloseWebSocket(err error) bool {
+	if err == nil {
+		return false
+	}
+	return errors.Is(err, gws.ErrConnClosed) || errors.Is(err, transport.ErrWebSocketNotConnected)
+}
+
+// getSSHTransport returns the system's SSH transport, creating it on first use.
+// The transport owns the only SSH connection to the agent; it is shared by the
+// updater and on-demand requests and connects lazily.
+// It returns errSSHDisabled if DISABLE_SSH is set on the hub.
+func (sys *System) getSSHTransport() (*transport.SSHTransport, error) {
+	if sshFallbackDisabled() {
+		return nil, errSSHDisabled
+	}
+	sys.sshMu.Lock()
+	defer sys.sshMu.Unlock()
+	if sys.sshTransport != nil {
+		return sys.sshTransport, nil
+	}
+	if sys.manager.sshConfig == nil {
+		if err := sys.manager.createSSHClientConfig(); err != nil {
+			return nil, err
+		}
+	}
+	sys.sshTransport = transport.NewSSHTransport(transport.SSHTransportConfig{
+		Host:      sys.Host,
+		Port:      sys.Port,
+		Config:    sys.manager.sshConfig,
+		Timeout:   sessionTimeout,
+		OnConnect: sys.onSSHConnect,
+	})
+	return sys.sshTransport, nil
+}
+
+// onSSHConnect resets per-connection state after a new SSH connection is made.
+func (sys *System) onSSHConnect(agentVersion semver.Version) {
+	sys.setAgentVersion(agentVersion)
+	sys.monitorsNeedSync.Store(true)
+	sys.manager.resetFailedSmartFetchState(sys.Id)
+	sys.manager.resetFailedZfsFetchState(sys.Id)
+}
+
+// getAgentVersion returns the connected agent's version, or zero if unknown.
+func (sys *System) getAgentVersion() semver.Version {
+	if v := sys.agentVersion.Load(); v != nil {
+		return *v
+	}
+	return semver.Version{}
+}
+
+// setAgentVersion records the connected agent's version.
+func (sys *System) setAgentVersion(v semver.Version) {
+	sys.agentVersion.Store(&v)
+}
+
+// fetchDataFromAgent attempts to fetch data from the agent, prioritizing WebSocket if available.
+// Each fetch decodes into a new struct: CBOR leaves fields the agent omits
+// untouched, and real-time and regular updates may fetch concurrently.
+func (sys *System) fetchDataFromAgent(options common.DataRequestOptions) (*system.CombinedData, error) {
+	if sys.WsConn != nil && sys.WsConn.IsConnected() {
+		wsData, err := sys.fetchDataViaWebSocket(options)
+		if err == nil {
+			sys.syncPendingNetworkMonitors()
+			return wsData, nil
+		}
+		// A slow collection doesn't mean the connection is broken. Closing it
+		// would force the agent into a reconnect loop, so only report the error.
+		if errors.Is(err, context.DeadlineExceeded) {
+			return nil, err
+		}
+		// close the WebSocket connection if error and try SSH
+		sys.closeWebSocketConnection()
+	}
+
+	sshData, err := sys.fetchDataViaSSH(options)
+	if err != nil {
+		return nil, err
+	}
+	sys.syncPendingNetworkMonitors()
+	return sshData, nil
+}
+
+// wsDataRequestTimeout bounds how long to wait for stats over WebSocket. Agent
+// collection can legitimately take several seconds (e.g. a slow `zpool list`),
+// so this must be well above the request manager's 5s default.
+var wsDataRequestTimeout = 30 * time.Second
+
+// maxAgentSilence is how long a WebSocket agent may go without sending anything
+// before failed polls stop keeping its connection alive. An agent whose
+// collection runs past its own 120s deadline drops the connection itself, so a
+// live agent always answers within interval + 120s.
+var maxAgentSilence = 3 * time.Minute
+
+func (sys *System) fetchDataViaWebSocket(options common.DataRequestOptions) (*system.CombinedData, error) {
+	if sys.WsConn == nil || !sys.WsConn.IsConnected() {
+		return nil, errors.New("no websocket connection")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), wsDataRequestTimeout)
+	defer cancel()
+	wsTransport := transport.NewWebSocketTransport(sys.WsConn)
+	data := &system.CombinedData{}
+	if err := wsTransport.Request(ctx, common.GetData, options, data); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+// FetchContainerInfoFromAgent fetches container info from the agent
+func (sys *System) FetchContainerInfoFromAgent(containerID string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var result string
+	err := sys.request(ctx, common.GetContainerInfo, common.ContainerInfoRequest{ContainerID: containerID}, &result)
+	return result, err
+}
+
+// FetchContainerLogsFromAgent fetches container logs from the agent
+func (sys *System) FetchContainerLogsFromAgent(containerID string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var result string
+	err := sys.request(ctx, common.GetContainerLogs, common.ContainerLogsRequest{ContainerID: containerID}, &result)
+	return result, err
+}
+
+// FetchSystemdInfoFromAgent fetches detailed systemd service information from the agent
+func (sys *System) FetchSystemdInfoFromAgent(serviceName string) (systemd.ServiceDetails, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var result systemd.ServiceDetails
+	err := sys.request(ctx, common.GetSystemdInfo, common.SystemdInfoRequest{ServiceName: serviceName}, &result)
+	return result, err
+}
+
+// FetchSystemdLogsFromAgent fetches recent journal entries for a systemd service from the agent.
+func (sys *System) FetchSystemdLogsFromAgent(serviceName string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var result string
+	err := sys.request(ctx, common.GetSystemdLogs, common.SystemdLogsRequest{ServiceName: serviceName}, &result)
+	return result, err
+}
+
+// FetchSmartDataFromAgent fetches SMART data from the agent.
+func (sys *System) FetchSmartDataFromAgent() (smart.SmartDataResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	if sys.getAgentVersion().LT(vpsmonitor.MinVersionAgentResponse) {
+		var data map[string]smart.SmartData
+		err := sys.request(ctx, common.GetSmartData, nil, &data)
+		return smart.SmartDataResponse{Data: data}, err
+	}
+	var result smart.SmartDataResponse
+	err := sys.request(ctx, common.GetSmartData, nil, &result)
+	return result, err
+}
+
+// FetchPackageUpdatesFromAgent fetches the list of pending package updates from the agent.
+func (sys *System) FetchPackageUpdatesFromAgent() (system.PackageUpdates, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var result system.PackageUpdates
+	err := sys.request(ctx, common.GetPackageUpdates, nil, &result)
+	return result, err
+}
+
+// FetchZfsDataFromAgent fetches ZFS detail data from the agent.
+func (sys *System) FetchZfsDataFromAgent(force bool) (*zfs.ZfsData, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	var result zfs.ZfsData
+	err := sys.request(ctx, common.GetZfsData, common.ZfsDataRequest{Force: force}, &result)
+	return &result, err
+}
+
+func MakeStableHashId(strings ...string) string {
+	hash := fnv.New32a()
+	for _, str := range strings {
+		hash.Write([]byte(str))
+	}
+	return fmt.Sprintf("%x", hash.Sum32())
+}
+
+// fetchDataViaSSH handles fetching data using SSH.
+func (sys *System) fetchDataViaSSH(options common.DataRequestOptions) (*system.CombinedData, error) {
+	data := &system.CombinedData{}
+	err := sys.runSSHOperation(1, func(session *ssh.Session) (bool, error) {
+		stdout, err := session.StdoutPipe()
+		if err != nil {
+			return false, err
+		}
+		stdin, stdinErr := session.StdinPipe()
+		if err := session.Shell(); err != nil {
+			return false, err
+		}
+
+		// reset in case of retry after a partial decode
+		*data = system.CombinedData{}
+
+		if sys.getAgentVersion().GTE(vpsmonitor.MinVersionAgentResponse) && stdinErr == nil {
+			req := common.HubRequest[any]{Action: common.GetData, Data: options}
+			_ = cbor.NewEncoder(stdin).Encode(req)
+			_ = stdin.Close()
+
+			var resp common.AgentResponse
+			if decErr := cbor.NewDecoder(stdout).Decode(&resp); decErr == nil {
+				if resp.Error != "" {
+					return false, errors.New(resp.Error)
+				}
+				if err := transport.UnmarshalResponse(resp, common.GetData, data); err != nil {
+					return false, err
+				}
+				if err := session.Wait(); err != nil {
+					return false, err
+				}
+				return false, nil
+			}
+		}
+
+		var decodeErr error
+		if sys.getAgentVersion().GTE(vpsmonitor.MinVersionCbor) {
+			decodeErr = cbor.NewDecoder(stdout).Decode(data)
+		} else {
+			decodeErr = json.NewDecoder(stdout).Decode(data)
+		}
+
+		if decodeErr != nil {
+			return true, decodeErr
+		}
+
+		if err := session.Wait(); err != nil {
+			return false, err
+		}
+
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// runSSHOperation opens a session on the system's SSH connection and executes
+// the provided operation. The operation can request a retry by returning true
+// as the first return value.
+func (sys *System) runSSHOperation(retries int, operation func(*ssh.Session) (bool, error)) error {
+	sshTransport, err := sys.getSSHTransport()
+	if err != nil {
+		return err
+	}
+	for attempt := 0; attempt <= retries; attempt++ {
+		// A down system may still hold a dead connection, so always re-dial.
+		if sys.GetStatus() == down {
+			sshTransport.Close()
+		}
+		client, err := sshTransport.Connect(sys.ctx)
+		if err != nil {
+			return err
+		}
+
+		session, err := sshTransport.NewSession(sys.ctx, client)
+		if err != nil {
+			if attempt >= retries {
+				return err
+			}
+			sys.manager.hub.Logger().Warn("Session closed. Retrying...", "host", sys.Host, "port", sys.Port, "err", err)
+			sshTransport.CloseClient(client)
+			continue
+		}
+
+		// Bound the whole operation. A half-open TCP connection (a dead peer that
+		// never sends RST/FIN) or a wedged agent that accepts the session but
+		// never writes a response would otherwise block the read forever. Because
+		// StartUpdater runs update() synchronously on its ticker, that stalls the
+		// per-system updater indefinitely with no error and no re-dial until the
+		// hub is restarted (issue #2041). On timeout we tear down the connection
+		// so the blocked read unwinds and the system is re-dialed on the next tick.
+		retry, opErr := runWithTimeout(sshOperationTimeout, func() (bool, error) {
+			defer session.Close()
+			return operation(session)
+		}, func() { sshTransport.CloseClient(client) })
+
+		if opErr == nil {
+			return nil
+		}
+
+		if retry {
+			sshTransport.CloseClient(client)
+			if attempt < retries {
+				continue
+			}
+		}
+
+		return opErr
+	}
+
+	return fmt.Errorf("ssh operation failed")
+}
+
+// sshOperationTimeout bounds a single SSH data exchange (send request, read
+// response, wait for the remote command to exit). It is more generous than the
+// session-creation timeout to tolerate briefly slow agents, but is kept well
+// under the collection interval so a stalled connection is detected and
+// re-dialed within one cycle (see issue #2041).
+const sshOperationTimeout = 20 * time.Second
+
+// runWithTimeout runs op in a goroutine and returns its result, or, if op does
+// not finish within timeout, calls onTimeout (used to tear down the connection
+// so a blocked op can unwind) and returns a retryable timeout error. This
+// guarantees the caller can never block indefinitely on a dead SSH connection.
+func runWithTimeout(timeout time.Duration, op func() (bool, error), onTimeout func()) (retry bool, err error) {
+	type opResult struct {
+		retry bool
+		err   error
+	}
+	// Buffered so the op goroutine never leaks even when we return on timeout.
+	done := make(chan opResult, 1)
+	go func() {
+		r, e := op()
+		done <- opResult{retry: r, err: e}
+	}()
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	select {
+	case res := <-done:
+		return res.retry, res.err
+	case <-timer.C:
+		if onTimeout != nil {
+			onTimeout()
+		}
+		return true, fmt.Errorf("ssh operation timed out after %s", timeout)
+	}
+}
+
+// closeSSHConnection closes the SSH connection but keeps the system in the manager
+func (sys *System) closeSSHConnection() {
+	sys.sshMu.Lock()
+	sshTransport := sys.sshTransport
+	sys.sshMu.Unlock()
+	if sshTransport != nil {
+		sshTransport.Close()
+	}
+}
+
+// closeWebSocketConnection closes the WebSocket connection but keeps the system in the manager
+// to allow updating via SSH. It will be removed if the WS connection is re-established.
+// The system will be set as down a few seconds later if the connection is not re-established.
+func (sys *System) closeWebSocketConnection() {
+	if sys.WsConn != nil {
+		sys.WsConn.Close(nil)
+	}
+}
+
+// getJitter returns a channel that will be triggered after a random delay
+// between 51% and 95% of the interval.
+// This is used to stagger the initial WebSocket connections to prevent clustering.
+func getJitter() <-chan time.Time {
+	minPercent := 51
+	maxPercent := 95
+	jitterRange := maxPercent - minPercent
+	msDelay := (interval * minPercent / 100) + rand.Intn(interval*jitterRange/100)
+	return time.After(time.Duration(msDelay) * time.Millisecond)
+}
+
+// migrateDeprecatedFields moves values from deprecated fields to their new locations if the new
+// fields are not already populated. Deprecated fields and refs may be removed at least 30 days
+// and one minor version release after the release that includes the migration.
+//
+// This is run when processing incoming system data from agents, which may be on older versions.
+func migrateDeprecatedFields(cd *system.CombinedData, createDetails bool) {
+	// migration added 0.19.0
+	if cd.Stats.Bandwidth[0] == 0 && cd.Stats.Bandwidth[1] == 0 {
+		cd.Stats.Bandwidth[0] = uint64(cd.Stats.NetworkSent * 1024 * 1024)
+		cd.Stats.Bandwidth[1] = uint64(cd.Stats.NetworkRecv * 1024 * 1024)
+		cd.Stats.NetworkSent, cd.Stats.NetworkRecv = 0, 0
+	}
+	// migration added 0.19.0
+	if cd.Info.BandwidthBytes == 0 {
+		cd.Info.BandwidthBytes = uint64(cd.Info.Bandwidth * 1024 * 1024)
+		cd.Info.Bandwidth = 0
+	}
+	// migration added 0.19.0
+	if cd.Stats.DiskIO[0] == 0 && cd.Stats.DiskIO[1] == 0 {
+		cd.Stats.DiskIO[0] = uint64(cd.Stats.DiskReadPs * 1024 * 1024)
+		cd.Stats.DiskIO[1] = uint64(cd.Stats.DiskWritePs * 1024 * 1024)
+		cd.Stats.DiskReadPs, cd.Stats.DiskWritePs = 0, 0
+	}
+	// migration added 0.21.1
+	for _, fs := range cd.Stats.ExtraFs {
+		if fs == nil {
+			continue
+		}
+		if fs.DiskReadBytes == 0 && fs.DiskWriteBytes == 0 {
+			fs.DiskReadBytes = uint64(fs.DiskReadPs * 1024 * 1024)
+			fs.DiskWriteBytes = uint64(fs.DiskWritePs * 1024 * 1024)
+		}
+		fs.DiskReadPs, fs.DiskWritePs = 0, 0
+	}
+	// migration added 0.21.1
+	const gb = 1024 * 1024 * 1024
+	if cd.Stats.MemBytes == [4]uint64{} {
+		cd.Stats.MemBytes = [4]uint64{
+			uint64(cd.Stats.Mem * gb),
+			uint64(cd.Stats.MemUsed * gb),
+			uint64(cd.Stats.MemBuffCache * gb),
+			uint64(cd.Stats.MemZfsArc * gb),
+		}
+	}
+	if cd.Stats.SwapBytes == [2]uint64{} {
+		cd.Stats.SwapBytes = [2]uint64{uint64(cd.Stats.Swap * gb), uint64(cd.Stats.SwapUsed * gb)}
+	}
+	// GB fields are kept in stored records for third-party integrations until they are removed
+	// migration added 0.19.0 - Move deprecated Info fields to Details struct
+	if cd.Details == nil && cd.Info.Hostname != "" {
+		if createDetails {
+			cd.Details = &system.Details{
+				Hostname:    cd.Info.Hostname,
+				Kernel:      cd.Info.KernelVersion,
+				Cores:       cd.Info.Cores,
+				Threads:     cd.Info.Threads,
+				CpuModel:    cd.Info.CpuModel,
+				Podman:      cd.Info.Podman,
+				Os:          cd.Info.Os,
+				MemoryTotal: cd.Stats.MemBytes[0],
+			}
+		}
+		// zero the deprecated fields to prevent saving them in systems.info DB json payload
+		cd.Info.Hostname = ""
+		cd.Info.KernelVersion = ""
+		cd.Info.Cores = 0
+		cd.Info.CpuModel = ""
+		cd.Info.Podman = false
+		cd.Info.Os = 0
+	}
+}

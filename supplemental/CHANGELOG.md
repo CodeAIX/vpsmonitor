@@ -1,0 +1,868 @@
+## 0.21.1
+
+For developers using the agent as a Go package, `Agent.Start` now requires a `context.Context`.
+
+For authors of integrations, please note that existing memory fields other than memory percentage are deprecated in favor of new fields which provide raw byte values. The deprecated fields are still populated, but will be removed in a future version.
+
+```go
+type Stats struct {
+  // Deprecated fields (populated on hubs <= 0.21.1; will be removed in a future version)
+	Mem            float64     `json:"m" cbor:"2,keyasint"`  // Deprecated: GB, use MemBytes. Memory GB fields are kept for older hubs and integrations.
+	MaxMem         float64     `json:"mm,omitzero" cbor:"-"` // Deprecated: GB, use MaxMemBytes.
+	MemUsed        float64     `json:"mu" cbor:"3,keyasint"` // Deprecated: GB, use MemBytes.
+	MemBuffCache   float64     `json:"mb" cbor:"5,keyasint"` // Deprecated: GB, use MemBytes.
+	MemZfsArc      float64     `json:"mz,omitzero" cbor:"6,keyasint,omitempty"` // Deprecated: GB, use MemBytes.
+	Swap           float64     `json:"s,omitzero" cbor:"7,keyasint,omitempty"`  // Deprecated: GB, use SwapBytes.
+	SwapUsed       float64     `json:"su,omitzero" cbor:"8,keyasint,omitempty"` // Deprecated: GB, use SwapBytes.
+  // New fields (populated on hub version 0.21.1+ for all agents)
+	MemBytes       [4]uint64   `json:"mem,omitzero" cbor:"41,keyasint,omitzero"`  // [total, used, buff/cache, zfs arc] bytes
+	MaxMemBytes    uint64      `json:"memm,omitzero" cbor:"-"`                    // max used memory bytes
+	SwapBytes      [2]uint64   `json:"swap,omitzero" cbor:"42,keyasint,omitzero"` // [total, used] bytes
+}
+```
+
+- Add TLS certificate expiry alert for network monitors (#2627)
+
+- Add opt-in cgroup CPU and memory accounting (#2505)
+
+- Add pagination with a shared rows-per-page setting to data tables (#2444)
+
+- Add IRQ, SoftIRQ and Nice to the CPU usage breakdown (#2647)
+
+- Add `OAUTH_DEFAULT_USER_ROLE` environment variable to set the role of new OAuth users (#2516)
+
+- Add `HUB_HEADERS` environment variable to set custom WebSocket headers on the agent (#2585)
+
+- Add option to ignore TLS errors for HTTPS monitors (#2500)
+
+- Add zpool status messages to ZFS pool health (#2509)
+
+- Add CPU socket count to the system page (#2646)
+
+- Add `CONTAINER_NAME_LABEL` environment variable to name containers from a label (#2644)
+
+- Add `env` and `envFrom` options to the Helm chart (#2626)
+
+- Add Brazilian Portuguese (pt-BR) and Catalan translations (#2635)
+
+- Add xbps support to package update checks (#2522)
+
+- Change agent tokens to be masked until explicitly revealed (#2625)
+
+- Change the user created from `USER_EMAIL` to be an admin (#2516)
+
+- Fix users being able to reassign record ownership through updates (#2632)
+
+- Fix dashboard universal tokens appearing in request URLs (#2630)
+
+- Fix fan sensor reads blocking collection indefinitely (#2638, #2639)
+
+- Fix HTTPS monitor certificates not being re-checked (now hourly) (#2673)
+
+- Fix scheduled monitor probes running while the hub isn't requesting stats
+
+- Fix sensor names being changed by exclude filters (#2645)
+
+- Fix Libre Hardware Monitor helper stopping after sensor failures (#2624)
+
+- Fix arm/v6 Docker images being built with the wrong GOARM setting (#2637)
+
+- Fix numbers not using the app language for formatting (#2621)
+
+- Fix systems table showing no loading spinner until systems are loaded
+
+- Fix btrfs pool health when sysfs device info is unavailable (#2489)
+
+- Fix ZFS pool capacity to use the root dataset (#2540)
+
+- Fix package update checks under the systemd sandbox (#2538)
+
+- Fix systemd service logs missing output from services running as a non-system user (#2553)
+
+- Fix systemd monitoring starting when systemd is not available on D-Bus (#2573)
+
+- Fix hub dropping slow agent connections between polls (#2435)
+
+- Fix hub keeping connections open to unresponsive agents
+
+- Fix agent reconnect and shutdown handling (#2464)
+
+- Fix network counter underflow when interfaces are removed or containers restart (#2574)
+
+- Fix host CPU usage after a counter rollback
+
+- Fix larger stored stats records caused by zero-value fields
+
+- Fix legacy hubs receiving a duplicate stats payload (#2529)
+
+- Fix NVIDIA GPU power when power usage is unsupported by falling back to NVML power samples (#2550)
+
+- Fix zero GPU package power being stored (#2551)
+
+- Fix `intel_gpu_top` parsing when samples are missing commas (#2589)
+
+- Fix NVMe unsafe shutdowns counter overflowing (#2583)
+
+- Fix NVMe namespace fallbacks being lost on rescan (#2597)
+
+- Fix handling of cached NVMe failures and empty SMART responses
+
+- Fix zypper's apt-get wrapper being detected as apt (#2523)
+
+- Fix updater stopping when the system record lookup fails (#2588)
+
+- Fix systems table losing the update count when a host is down (#2559)
+
+- Fix latency tolerance in 1m realtime charts (#2521)
+
+- Fix charts hiding isolated points and spinning endlessly on empty values (#2514)
+
+- Fix live metrics subscriptions not ending after leaving the 1m view (#2599)
+
+- Fix sorting of monitor targets without a URL scheme and show HTTPS in the badge (#2501)
+
+- Fix lazy loading of the systemd table (#2602)
+
+- Fix system dialog layout shifting between tabs (#2571)
+
+- Improve accessibility and fix login page translation (#2604)
+
+- Update Go to 1.27.2 and Go dependencies
+
+- Update npm packages with security alerts (#2575)
+
+## 0.21.0
+
+- Add pending package updates list to the system page (#2357, #2427)
+
+- Add Wi-Fi signal strength monitoring (#2367)
+
+- Add TLS certificate expiry check to HTTPS network monitors (#2401)
+
+- Add systemd service logs to service details (#2440)
+
+- Add option to set the DNS server queried by DNS monitors (#2389)
+
+- Add network monitor comparison across systems and within the same system (#2442, #2477)
+
+- Add `SYNC_SYSTEM_NAMES` environment variable to sync system names with hostnames (#1917)
+
+- Add `DISABLE_SSH` option to the hub to skip SSH fallback (#2469)
+
+- Add environment variable to disable container image update checks (#2371)
+
+- Add MB/s and GB/s unit selection to bandwidth alerts
+
+- Add log timestamp toggle (#2471)
+
+- Add view settings to the network monitors table (#2396)
+
+- Add Twemoji Country Flags font so flags always render (#2363)
+
+- Change active alerts grid to a banner and sheet (#2445)
+
+- Change network packet loss to a red line (#2377)
+
+- Improve Intel GPU monitoring by parsing `intel_gpu_top` JSON output (#2387)
+
+- Improve LXC guest CPU usage reporting using cgroup accounting (#2341)
+
+- Improve WebSocket and SSH fallback handling (#2441)
+
+- Fix LVM volumes not mapping to disk I/O by resolving device symlinks (#2486)
+
+- Fix ZFS pool I/O stats to include snapshot reads (#2474)
+
+- Fix inaccurate disk I/O on the first sample of an interval (#2420)
+
+- Fix Windows volume names being altered when matching I/O devices (#2419)
+
+- Fix 32-bit wrap of disk I/O time counters (#2407)
+
+- Fix partial NVMe SMART data handling (#2340)
+
+- Fix NVMe power-cycle SMART fields overflowing (#2484)
+
+- Fix `nvethernet` network counters (#2090)
+
+- Fix agent not reconnecting after an async WebSocket handshake failure (#2329, #2326)
+
+- Fix WebSocket reconnect loops on slow agent collections (#2294)
+
+- Fix `SKIP_GPU` not excluding GPU hwmon temperatures and fans (#2313)
+
+- Fix Docker image update check across all image repository digests (#2393)
+
+- Fix status alerts being lost during pending recovery (#2375)
+
+- Fix hub requiring system access for alert subscriptions and delivery (#2455)
+
+- Fix hub not honoring SSH request cancellation (#2450)
+
+- Fix hub not restarting `vpsmonitor-hub.service` after update (#2410)
+
+- Fix custom DNS resolvers being lost when syncing monitors (#2448)
+
+- Fix IP targets being accepted for DNS monitors (#2483)
+
+- Fix short monitor IDs failing schema validation (#2454)
+
+- Fix network monitor charts to show gaps for failed probes and disconnects (#2428)
+
+- Fix duplicate y-axis labels on network monitor response charts (#2426)
+
+- Fix confirmation before deleting a single network monitor (#2467)
+
+- Fix translations not refreshing on locale change (#2405)
+
+- Fix scrollbar layout shifts (#2406)
+
+- Fix hub returning 200 for unknown frontend routes (#2414)
+
+- Fix proxy caching of systemd details (#2456)
+
+- Fix agent not exiting with code 0 when run without a key on Windows (#2376, #2247)
+
+- Fix OpenWrt user account handling in the install script (#2370)
+
+- Update Go dependencies
+
+## 0.20.0
+
+- Add network monitoring from agents (#2266, #1911)
+
+- Add Docker image update available flag (#2211)
+
+- Add btrfs filesystem reporting as storage pools (#2315)
+
+- Add persistence of view preferences and language to user settings (#1831)
+
+- Add `TRUSTED_PROXY_IPS` allowlist for `TRUSTED_AUTH_HEADER` (#2327)
+
+- Add ZFS utilities to Intel and NVIDIA agent images (#2288, #2311)
+
+- Revert SMART warnings for certain attributes (#2296, #2308, #2347)
+
+- Improve NVMe data units display as human-readable GB/TB (#2303)
+
+- Fix agent disconnects during slow collections by extending WebSocket deadline (#2294)
+
+- Fix missing root CA certificates in base agent image (#2291)
+
+- Fix false RAID health warnings during healthy data scrubbing (#2109)
+
+- Fix ZFS monitoring when /dev/zfs is unavailable (#2325)
+
+- Fix spurious `HUB_URL` warning in SSH-only mode (#2316)
+
+- Fix idle GPU utilization display in systems table (#2312)
+
+- Fix session handling to clear auth store after token expiry (#2310)
+
+- Fix chart history handling when switching to live charts (#2333)
+
+- Update Go dependencies
+
+## 0.19.0
+
+- **Potential breaking change:** Agents now verify HTTPS certificates. If an agent connects to a hub using a self-signed or otherwise untrusted certificate, configure `CA_CERT_FILE` with the appropriate CA certificate or the connection will be rejected.
+
+- Add ZFS pool and dataset monitoring (#2209)
+
+- Add container health alerts with log excerpts in notifications (#2225)
+
+- Add alerts for failed systemd services (#2173)
+
+- Add alerts for CPU I/O wait and steal time (#2249)
+
+- Add cumulative disk read and write totals to the Disk I/O sheet (#2179)
+
+- Add Greek and Uzbek translations (#2034)
+
+- Add custom root disk names and sort disks alphabetically (#2006)
+
+- Improve alert security by enforcing system ownership and blocking additional internal notification URL ranges
+
+- Improve ATA SMART warnings for critical attributes (#2275)
+
+- Fix a hub crash caused by concurrent SSH client shutdown (#2277)
+
+- Fix host CPU and memory totals when Docker runs in a VM on macOS or Windows (#2272)
+
+- Fix multi-line `TOKEN_FILE` loading (#2276)
+
+- Fix QNAP MD RAID arrays being incorrectly reported as failed (#2065)
+
+- Fix Intel GPU power data disappearing between samples (#2256)
+
+- Fix swap usage calculations to include cached swap (#2267)
+
+- Fix agent payload failures caused by invalid UTF-8 in battery names (#2241)
+
+- Fix uptime reporting inside Linux containers (#2180)
+
+- Fix fan discovery on legacy hwmon devices (#2238)
+
+- Fix CPU model detection on MIPS systems (#2138)
+
+- Fix machine ID generation on FreeBSD and pfSense installations (#2274)
+
+- Fix agent environment variable updates during reinstall (#2107)
+
+- Fix the install script reporting the wrong listen address after upgrades (#2243)
+
+- Fix load average precision on macOS, BSD, and Windows (#2245)
+
+- Update the Go version and Go dependencies
+
+## 0.18.8
+
+- Add multi-battery monitoring
+
+- Add Linux fan RPM monitoring (#2032)
+
+- Add Intel GPU power monitoring through sysfs and Intel Arc GPU monitoring through `nvtop` (#2020, #2223)
+
+- Add CPU and ACPI thermal zone monitoring on FreeBSD (#2227)
+
+- Add popup-free OAuth login when `OAUTH_DISABLE_POPUP=true` (#2171)
+
+- Add a `:slim` NVIDIA agent container image (#2002, #2003)
+
+- Add ARMv5 and ARMv6 builds, and ARM64 support for the NVIDIA agent image (#1884, #2207)
+
+- Improve SMART device detection for shared paths and explicit device type hints (#2102)
+
+- Improve agent startup after OPNsense and pfSense reboots (#2089, #2214)
+
+- Improve SSH-pull agent reconnection when connections silently fail (#2126)
+
+- Improve update security with checksum verification and archive path containment
+
+- Add public key display to universal token settings (#2028)
+
+- Add support for showing all IP and port mappings for containers bound to multiple IPs (#1993)
+
+- Fix stale SMART records when drives are no longer reported (#2178)
+
+- Fix Docker memory charts and container statistics after malformed or backwards Docker counters (#2027, #2066, #2205)
+
+- Fix memory calculation underflow and Linux battery percentages (#1978, #1957)
+
+- Improve connection source IP detection behind proxies (#1973)
+
+- Update Go and JavaScript dependencies
+
+## 0.18.7
+
+- Add more disk I/O metrics (utilization, read/write time, await, queue depth) (#1866)
+
+- Add ability to copy alerts between systems (#1853)
+
+- Add `SENSORS_TIMEOUT` environment variable (#1871)
+
+- Replace `distatus/battery` with an internal implementation (#1872)
+
+- Restrict universal token API to non-superuser accounts (#1870)
+
+- Fix macOS ARM64 crashes by upgrading `gopsutil` to v4.26.3 (#1881, #796)
+
+- Fix text size for system names in grid view (#1860)
+
+- Fix NVMe capacity reporting for Apple SSDs (#1873)
+
+- Fix Windows root disk detection when the executable is not on the root disk (#1863)
+
+- Fix nested virtual filesystem inclusion in Docker when mounting host root (#1859)
+
+- Fix OPNsense installation persistence by using the daemon user (#1880)
+
+- Upgrade JS dependencies with dependabot security alerts (#1882)
+
+- Upgrade PocketBase to latest version
+
+## 0.18.6
+
+- Add apple-touch-icon link to index.html (#1850)
+
+- Fix UI bug where charts did not display 1m max until next update
+
+- Fix regression in partition discovery on Docker (#1847)
+
+- Fix agent detection of Podman when using socket proxy (#1846)
+
+- Fix NVML GPU collection being disabled when `nvidia-smi` is not in PATH (#1849)
+
+- Reset SMART interval on agent reconnect if the agent hasn't collected SMART data, allowing config changes to take effect immediately
+
+## 0.18.5
+
+- Add "update available" notification in hub web UI with `CHECK_UPDATES=true` (#1830)
+
+- Add Linux mdraid health monitoring (#1750)
+
+- Add ports column to containers table (#1481)
+
+- Allow Linux systemd timer monitoring with `SERVICE_PATTERNS` (#1820)
+
+- Add ZFS ARC support on FreeBSD
+
+- Add optional tabs layout on web UI system page (#1513)
+
+- Improve web UI performance and mobile styles
+
+- Improve disk discovery and I/O device matching (#1811, #1772)
+
+- Improve (likely fix) status alert reliability (#1519)
+
+- Fix temperature collection blocking agent stats on some systems (#1839)
+
+- Fix `SMART_INTERVAL` consistency across agent reconnects (#1800)
+
+- Fix container health status for Podman (#1475)
+
+- Fix disk usage averaging for extra disk alerts using historical records (#1801)
+
+- Fix bandwidth alert computation from byte-per-second source (#1770)
+
+- Fix 1m chart view leading to inflated Docker network IO during use
+
+- Fix light flashes when refreshing in dark mode (#1832)
+
+- Fix daylight saving time offset handling in daily quiet hours (#1827)
+
+- Fix potential nil pointer panics in hub realtime worker and websocket ping
+
+- Fix NIC auto-filter bypass when explicitly whitelisted (#1805)
+
+- Fix ATA device statistics handling for negative values (#1791)
+
+- Fix AMD GPU sysfs filesize misreporting workaround (#1799)
+
+- Fix macOS agent path lookup for `macmon` (#1746)
+
+- Update Go version and dependencies
+
+## 0.18.4
+
+- Add outbound heartbeat monitoring to external services (#1729)
+
+- Add experimental GPU monitoring for Apple Silicon. (#1747, #1746)
+
+- Add `nvtop` integration for GPU monitoring. (#1508)
+
+- Add `GPU_COLLECTOR` environment variable to manually specify the GPU collector(s).
+
+- Add eMMC health monitoring via sysfs. (#1736)
+
+- Add uptime to systems table. (#1719)
+
+- Add `DISABLE_SSH` environment variable to disable SSH agent functionality. (#1061)
+
+- Add `fingerprint` command to the agent. (#1726)
+
+- Add precise value entry for alerts via text input. (#1718)
+
+- Include GTT memory in AMD GPU metrics and improve device name lookup. (#1569)
+
+- Improve multiplexed logs detection for Podman. (#1755)
+
+- Harden against Docker API path traversal.
+
+- Fix issue where the agent could report incorrect root disk I/O when running in Docker. (#1737)
+
+- Retry Docker check on non-200 HTTP response. (#1754)
+
+- Fix race issue with meter threshold colors.
+
+- Update Go version and dependencies.
+
+- Add `InstallMethod` parameter to Windows install script.
+
+## 0.18.3
+
+- Add experimental sysfs AMD GPU collector. (#737, #1569)
+
+- Update LibreHardwareMonitorLib to 0.9.5. (#1697)
+
+- Improve container network stats accuracy.
+
+- Fix `SHARE_ALL_SYSTEMS` for system_details, smart_devices, and systemd_services. (#1660)
+
+- Parse ATA device statistics for temperature and future metrics. (#1689)
+
+- Add `SMART_DEVICES_SEPARATOR` environment variable and allow drives with the same name to be added with different types (e.g. RAID controllers). (#1655)
+
+- Add tooltips for navbar buttons. (#1636)
+
+- Add icon button for mobile use. (#1687)
+
+- Add tooltip to system name in systems table. (#1640)
+
+- Improve CJK truncation in UI.
+
+- Fix container uptime sorting edge case. (#1696)
+
+- Remove stale systemd services from tracking after deletion. (#1594)
+
+- Apply SELinux context after binary replacement. (#1678)
+
+- Update honeypot field name and autofill ignores. (#1011)
+
+- Write health_file to `/dev/shm` instead of `/tmp` if available. (#1455)
+
+- Don't force lowercase text for active alerts. (#1682)
+
+- Ensure battery current charge doesn't exceed full capacity. (#1668)
+
+- Increase `smartctl --scan` timeout to 10 seconds. (#1465)
+
+- Use name-only matching for unique S.M.A.R.T. devices. (#1655)
+
+- Fix smartctlArgs call to use hasExistingData flag. (#1645)
+
+- Ignore alt key combinations when navigating systems with arrow keys. (#1698)
+
+- Update Go dependencies
+
+## 0.18.2
+
+- Add separate dynamically linked glibc build for Linux. (#1618)
+
+- Fix GPU ID collision between Intel and NVIDIA collectors. (#1522)
+
+- Only hide GPU engine graph if entire usage is 0%. (#1624)
+
+- Add Jetson tegrastats regex support for pre-Jetpack 5 versions. (#1631)
+
+- Improve Indonesian translations. (#1625)
+
+## 0.18.1
+
+- Fix bug in 0.18.0 where all containers were cleared from the "All Containers" page when any system returned no containers.
+
+## 0.18.0
+
+- Add experimental NVML GPU collector. (#1522, #1587)
+
+- Add low battery alerts. (#1507)
+
+- Add battery charge to systems table.
+
+- Add option to make universal token permanent. (#1097, #1614)
+
+- Add `--url` and `--token` command line arguments to the agent. (#1524)
+
+- Collect S.M.A.R.T. data in the background every hour.
+
+- Add `SMART_INTERVAL` environment variable to customize S.M.A.R.T. data collection interval.
+
+- Collect system distribution and architecture.
+
+- Add `system_details` collection to store infrequently updated system information.
+
+- Improve S.M.A.R.T. device path lookup for NVMe devices. (#1504)
+
+- Use origin country flags for Spanish, Portuguese, English languages. (#1571)
+
+- Raise `smartctl` timeout to 15 seconds. (#1465)
+
+- Skip known non-unique product UUID when generating fingerprints. (#1556)
+
+- Fix container logs decoding for raw streams. (#1535)
+
+- Fix capacity sorting in S.M.A.R.T. table. (#1551)
+
+- Fix loader visibility when no systems are present. (#1511)
+
+- Rename login honeypot field to prevent password manager autofill (#1011).
+
+- Add Serbian and Bahasa Indonesia translations.
+
+- Update Go dependencies.
+
+## 0.17.0
+
+- Add quiet hours to silence alerts during specific time periods. (#265)
+
+- Add dedicated S.M.A.R.T. page.
+
+- Add alerts for S.M.A.R.T. failures.
+
+- Add `DISK_USAGE_CACHE` environment variable. (#1426)
+
+- Add `SKIP_SYSTEMD` environment variable. (#1448)
+
+- Add hub builds for Windows and FreeBSD.
+
+- Change extra disk indicators in systems table to display usage range as dots. (#1409)
+
+- Strip ANSI escape sequences from docker logs. (#1478)
+
+- Fix issue where the Add System button is visible to read-only users. (#1442)
+
+- Fix font ligatures creating unwanted artifacts in random ids. (#1434)
+
+- Update Go dependencies.
+
+## 0.16.1
+
+- Add services column to All Systems table. (#1153)
+
+- Add `SERVICE_PATTERNS` environment variable to filter systemd services. (#1153)
+
+- Fix detection and handling of immutable filesystems like Fedora Silverblue. (#1405)
+
+- Persist alert history page size preference. (#1404)
+
+- Add setting for layout width.
+
+- Update Go dependencies.
+
+## 0.16.0
+
+- Add basic systemd service monitoring. (#1153)
+
+- Add GPU usage alerts.
+
+- Show additional disk percentages in systems table. (#1365)
+
+- Embed `smartctl` in the Windows binary (experimental). (#1362)
+
+- Add `EXCLUDE_SMART` environment variable to exclude devices from S.M.A.R.T. monitoring. (#1392)
+
+- Change alert links to use system ID instead of name.
+
+- Update Go dependencies.
+
+## 0.15.4
+
+- Refactor containers table to fix clock issue causing no results. (#1337)
+
+- Fix Windows extra disk detection. (#1361)
+
+- Add total line to the tooltip of charts with multiple values. (#1280)
+
+- Add fallback paths for `smartctl` lookup. (#1362, #1363)
+
+- Fix `intel_gpu_top` parsing when engine instance id is in column. (#1230)
+
+- Update `henrygd/vpsmonitor-agent-nvidia` Dockerfile to build latest smartmontools. (#1335)
+
+## 0.15.3
+
+- Add CPU state details and per-core usage. (#1356)
+
+- Add `EXCLUDE_CONTAINERS` environment variable to exclude containers from being monitored. (#1352)
+
+- Add `INTEL_GPU_DEVICE` environment variable to specify Intel GPU device. (#1285)
+
+- Improve parsing of edge case S.M.A.R.T. power on times. (#1347)
+
+- Fix empty disk I/O values for extra disks. (#1355)
+
+- Fix battery nil pointer error. (#1353)
+
+- Add Hebrew with translations by @gabay.
+
+- Update `shoutrrr` and `gopsutil` dependencies.
+
+## 0.15.2
+
+- Improve S.M.A.R.T. device detection logic (fix regression in 0.15.1) (#1345)
+
+## 0.15.1
+
+- Add `SMART_DEVICES` environment variable to specify devices and types. (#373, #1335)
+
+- Add support for `scsi`, `sntasmedia`, and `sntrealtek` S.M.A.R.T. types. (#373, #1335)
+
+- Handle power-on time attributes that are formatted as strings (e.g., "0h+0m+0.000s").
+
+- Skip virtual disks in S.M.A.R.T. monitoring. (#1332)
+
+- Add sorting to the S.M.A.R.T. table. (#1333)
+
+- Fix incorrect disk rendering in S.M.A.R.T. device details. (#1336)
+
+- Fix `SHARE_ALL_SYSTEMS` setting not working for containers. (#1334)
+
+- Fix text contrast issue when container details are disabled. (#1324)
+
+## 0.15.0
+
+- Add initial S.M.A.R.T. support for disk health monitoring. (#962)
+
+- Add `henrygd/vpsmonitor-agent:alpine` Docker image and include `smartmontools` in all non-base agent images.
+
+- Remove environment variables from container details (#1305)
+
+- Add `CONTAINER_DETAILS` environment variable to control access to container logs and info APIs. (#1305)
+
+- Improve temperature chart by allowing y-axis to start above 0 for better readability. (#1307)
+
+- Improve battery detection logic. (#1287)
+
+- Limit docker log size to prevent possible memory leak. (#1322)
+
+- Update Go dependencies.
+
+## 0.14.1
+
+- Add `MFA_OTP` environment variable to enable email-based one-time password for users and/or superusers.
+
+- Add image name to containers table. (#1302)
+
+- Add spacing for long temperature chart tooltip. (#1299)
+
+- Fix sorting by status in containers table. (#1294)
+
+## 0.14.0
+
+- Add `/containers` page for viewing current status of all running containers. (#928)
+
+- Add ability to view container status, health, details, and basic logs. (#928)
+
+- Probable fix for erroneous network stats when interface resets (#1267, #1246)
+
+# 0.13.2
+
+- Add ability to set custom name for extra filesystems. (#379)
+
+- Improve WebSocket agent reconnection after network interruptions. (#1263)
+
+- Allow more latency in one minute charts before visually disconnecting points. (#1247)
+
+- Update favicon and add add down systems count in bubble.
+
+## 0.13.1
+
+- Fix one minute charts on systems without Docker. (#1237)
+
+- Change system permalinks to use ID instead of name. (#1231)
+
+## 0.13.0
+
+- Add one minute chart with one second interval.
+
+- Improve accuracy of disk I/O statistics.
+
+- Add `SYSTEM_NAME` environment variable to override system name on universal token registration. (#1184)
+
+- Add `noindex` HTML meta tag. (#1218)
+
+- Update Go dependencies.
+
+## 0.12.12
+
+- Fix high CPU usage when `intel_gpu_top` returns an error. (#1203)
+
+- Add `SKIP_GPU` environment variable to skip GPU data collection. (#1203)
+
+- Add fallback cache/buff memory calculation when cache/buff isn't available ([#1198](https://github.com/CodeAIX/vpsmonitor/issues/1198))
+
+- Fix automatic agent update / restart on OpenRC. (#1199)
+
+## 0.12.11
+
+- Adjust calculation of cached memory (fixes #1187, #1196)
+
+- Add pattern matching and blacklist functionality to `NICS` env var. (#1190)
+
+- Update Intel GPU collector to parse plain text (`-l`) instead of JSON output (#1150)
+
+## 0.12.10
+
+Note that the default memory calculation changed in this release, which may cause a difference in memory usage compared to previous versions.
+
+- Add initial support for Intel GPUs (#1150, #755)
+
+- Show connection type (WebSocket / SSH) in hub UI.
+
+- Fix temperature unit and bytes / bits settings. (#1180)
+
+- Add `henrygd/vpsmonitor-agent-intel` image for Intel GPUs (experimental).
+
+- Update Go dependencies. Shoutrrr now supports notifications for Signal and WeChat Work (WeCom).
+
+## 0.12.9
+
+- Fix divide by zero error introduced in 0.12.8 :) (#1175)
+
+## 0.12.8
+
+- Add per-interface network traffic charts. (#926)
+
+- Add cumulative network traffic charts. (#926)
+
+- Add setting for time format (12h / 24h). (#424)
+
+- Add experimental one-time password (OTP) support.
+
+- Add `TRUSTED_AUTH_HEADER` environment variable for authentication forwarding. (#399)
+
+- Add `AUTO_LOGIN` environment variable for automatic login. (#399)
+
+- Add FreeBSD support for agent install script and update command.
+
+- Fix status alerts not being resolved when system comes up. (#1052)
+
+## 0.12.7
+
+- Make LibreHardwareMonitor opt-in with `LHM=true` environment variable. (#1130)
+
+- Fix bug where token was not refreshed when adding a new system. (#1141)
+
+- Add `USER_EMAIL` and `USER_PASSWORD` environment variables to set the email and password of the initial user. (#1137)
+
+- Display system counts (active, paused, down) in All Systems 'view' options. (#1078)
+
+- Remember All Systems sort order during session.
+
+## 0.12.6
+
+- Add maximum 1 minute memory usage.
+
+- Add status filters to All Systems table.
+
+- Virtualize All Systems table to improve performance with hundreds of systems. (#1100)
+
+- Fix Safari system link CSS bug.
+
+- Use older cuda image for increased compatibility (#1103)
+
+- Truncate long system names in All Systems table. (#1104)
+
+- Fix update mirror and add `--china-mirrors` flag. (#1035)
+
+## 0.12.5
+
+- Downgrade `gopsutil` to `v4.25.6` to fix panic on FreeBSD (#1083)
+
+- Exclude FreeBSD from battery charge monitoring to fix deadlock. (#1081)
+
+- Minor hub UI improvements.
+
+## 0.12.4
+
+- Add battery charge monitoring.
+
+- Add fallback mirror to the `update` commands. (#1035)
+
+- Fix blank token field in insecure contexts.
+
+- Allow opening internal router links in new tab.
+
+- Add `/api/vpsmonitor/user-alerts` endpoint. Remove use of batch API for alerts in hub.
+
+- Require auth for `/api/vpsmonitor/getkey` endpoint that returns the public key.
+
+- Change `GET /api/vpsmonitor/send-test-notification` endpoint to `POST /api/vpsmonitor/test-notification`.
+
+- Update Go and JS dependencies.
+
+- New translations by @Radotornado, @AlexVanSteenhoven, @harupong, @dymek37, @NaNomicon, Tommaso Cavazza, Caio Garcia, and others.
+
+## Older
+
+Release notes are available at <https://github.com/CodeAIX/vpsmonitor/releases>

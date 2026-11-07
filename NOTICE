@@ -1,0 +1,4 @@
+vpsmonitor is an independent VPS monitoring product maintained by CodeAIX.
+Derived from henrygd/beszel v0.21.1 and CodeAIX/Beszel-Plus commit a47d934.
+Original Beszel copyright (c) 2024 henrygd is retained in LICENSE.
+No historical device databases, identity keys, credentials or private local files are included.
