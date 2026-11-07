@@ -259,13 +259,17 @@ func TestTrafficWriterBoundsAndCoalesces(t *testing.T) {
 
 func TestTrafficCatchupAfterHubOutage(t *testing.T) {
 	sys, app := newTestSystemWithHub(t)
-	old := trafficTestSnapshot()
+	// Recovery is the same ledger at a later observation time. Calling the
+	// time-based fixture twice can change SourceCreatedAt on slower runners,
+	// accidentally testing source replacement instead of offline catch-up.
+	resumed := trafficTestSnapshot()
+	old := *resumed
+	old.Interfaces = append([]traffic.InterfaceDaily(nil), resumed.Interfaces...)
 	old.ObservedAt -= 3 * 24 * 3600
 	old.Interfaces[0].SourceUpdatedAt = old.ObservedAt
 	old.Interfaces[0].Days = old.Interfaces[0].Days[:27]
-	require.NoError(t, SaveTrafficSnapshot(t.Context(), app, sys.Id, old))
+	require.NoError(t, SaveTrafficSnapshot(t.Context(), app, sys.Id, &old))
 	require.Len(t, trafficRecords(t, app, "traffic_daily", sys.Id), 27)
-	resumed := trafficTestSnapshot()
 	require.NoError(t, SaveTrafficSnapshot(t.Context(), app, sys.Id, resumed))
 	require.NoError(t, SaveTrafficSnapshot(t.Context(), app, sys.Id, resumed))
 	rows := trafficRecords(t, app, "traffic_daily", sys.Id)
