@@ -9,7 +9,7 @@ import (
 
 func TestVerifyAssetChecksum(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "asset")
-	if err := os.WriteFile(path, []byte("vpsmonitor release asset"), 0600); err != nil {
+	if err := os.WriteFile(path, []byte("beszel release asset"), 0600); err != nil {
 		t.Fatal(err)
 	}
 

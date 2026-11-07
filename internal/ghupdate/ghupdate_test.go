@@ -16,11 +16,11 @@ func TestArchiveSuffix(t *testing.T) {
 	}{
 		{"armv5 agent", "vpsmonitor-agent", "linux", "arm", "5", "vpsmonitor-agent_linux_armv5.tar.gz"},
 		{"armv6 keeps legacy name", "vpsmonitor-agent", "linux", "arm", "6", "vpsmonitor-agent_linux_arm.tar.gz"},
-		{"hub keeps legacy arm name", "vpsmonitor", "linux", "arm", "6", "beszel_linux_arm.tar.gz"},
+		{"hub keeps legacy arm name", "vpsmonitor", "linux", "arm", "6", "vpsmonitor_linux_arm.tar.gz"},
 		{"armv7 agent", "vpsmonitor-agent", "linux", "arm", "7", "vpsmonitor-agent_linux_armv7.tar.gz"},
 		{"newer arm keeps legacy name", "vpsmonitor-agent", "linux", "arm", "8", "vpsmonitor-agent_linux_arm.tar.gz"},
 		{"unknown arm keeps legacy name", "vpsmonitor-agent", "linux", "arm", "", "vpsmonitor-agent_linux_arm.tar.gz"},
-		{"amd64 hub", "vpsmonitor", "linux", "amd64", "", "beszel_linux_amd64.tar.gz"},
+		{"amd64 hub", "vpsmonitor", "linux", "amd64", "", "vpsmonitor_linux_amd64.tar.gz"},
 		{"windows", "vpsmonitor-agent", "windows", "amd64", "", "vpsmonitor-agent_windows_amd64.zip"},
 	}
 
