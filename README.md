@@ -21,7 +21,7 @@ cd vpsmonitor
 
 默认打开 `http://127.0.0.1:8090` 创建管理员。在 Hub 中复制完整 Agent Compose 到每台 VPS 的新目录，执行 `docker compose up -d --build`。Agent 采用宿主网络并主动连接 Hub，默认无需新开放 Agent 入站端口；只需保留自己的持久卷，无需配置宿主 vnStat。
 
-完整步骤、远程 Hub 地址、手动网卡选择、更新/诊断命令和计量边界见 [安装维护指南](docs/DEPLOY.md)。旧软件及数据可以在新部署确认后删除，本项目不依赖旧数据迁移。
+完整步骤、远程 Hub 地址、手动网卡选择、更新/诊断命令和计量边界见 [安装维护指南](docs/DEPLOY.md)，测试证据见 [验证记录](docs/VALIDATION.md)。旧软件及数据可以在新部署确认后删除，本项目不依赖旧数据迁移。
 
 ## 开发
 
@@ -34,4 +34,4 @@ cd ../..
 go test -race -tags=testing -p 2 -timeout=20m ./...
 ```
 
-CI 自行测试和构建，不自动跟随原上游或重放补丁。产品版本独立于内部能力基线。原作者许可和来源见 [NOTICE](NOTICE) 与 [LICENSE](LICENSE)。
+CI 自行测试和构建，不自动跟随原上游或重放补丁。产品版本独立于内部能力基线。设计与后续发布边界见 [独立开发方案](docs/ARCHITECTURE.md)。原作者许可和来源见 [NOTICE](NOTICE) 与 [LICENSE](LICENSE)。

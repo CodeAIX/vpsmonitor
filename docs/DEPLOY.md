@@ -35,7 +35,7 @@ docker compose ps
 
 新 Agent 不需要 vnStat、宿主 vnstatd、UTC 配置或 vnStat 数据库挂载。Linux 宿主网卡计数直接记录到 `/var/lib/vpsmonitor-agent/traffic/`。默认忽略 Docker、veth、回环及常见隧道接口，从最低 metric 的有效 IPv4 默认路由选择唯一出口；支持 bond/VLAN 出口，不把所有接口相加。
 
-IPv6-only、多默认出口、Tailscale 出口等无法明确推断的情况，需要在该 Agent Compose 中将 `VPSMONITOR_TRAFFIC_INTERFACE: auto` 改成实际宿主出口名，例如 `ens7`。该参数选择的是宿主接口，而不是普通桥接容器 eth0。安装配置使用 `network_mode: host`；仅添加标记环境变量不能代替宿主网络。
+IPv6-only、多默认出口等无法明确推断的情况，需要在该 Agent Compose 中将 `VPSMONITOR_TRAFFIC_INTERFACE: auto` 改成实际宿主出口名，例如 `ens7`。隧道接口不作为本版计量口；使用 Tailscale 等复杂路由时需明确选择其底层宿主出口。该参数选择的是宿主接口，而不是普通桥接容器 eth0。安装配置使用 `network_mode: host`；仅添加标记环境变量不能代替宿主网络。
 
 也可在 VPS 克隆本仓库，使用维护脚本。在权限为 0600 的 `deploy/.env` 中填写 Hub 页面提供的 KEY、TOKEN、HUB_URL，可选 TRAFFIC_INTERFACE，然后：
 
@@ -70,6 +70,14 @@ CPU、内存、磁盘、负载、网速、Docker、在线状态及流量为首�
 update 只允许干净源码工作区，快进更新并重新构建对应容器，保留数据卷。stop 停止指定角色，不删除数据。对 Hub 的 doctor 仅检查容器、持久卷和二进制；页面健康、登录与设备连通性需另行核对。Agent doctor 检查实际 Docker 宿主网络、数据卷、进程健康以及是否有唯一新鲜的原生流量账本，不把“容器正在运行”当作流量正常。
 
 仅保存了 Hub 生成的独立 Compose 文件时，使用 `docker compose build --pull` 和 `docker compose up -d` 更新该文件指向的源码。若配置固定到某个提交，它不会自动跟随 main；需要先取得新版本配置或明确修改源码引用。
+
+## 重新部署与主动清空数据
+
+旧 Beszel/Beszel+ 的 Agent 和数据可以在新部署验证后直接清理，无需将其数据库、私钥或来源记录导入本项目。旧 vnStat 若仍供其他工具使用，可继续保留，vpsmonitor 不读取它。
+
+vpsmonitor 自身正常更新或容器重启应保留原数据卷。如果明确要丢弃某台设备的新账本并重新安装，先在 Hub 中删除该设备，再新建记录、取得新的 Token，使用新的空 Agent 数据目录部署。删除操作会清除该设备自己的资源/流量记录和套餐设置，需要重新设置，但不要求清空其他设备或手工修改数据库。
+
+不要只删 Hub 的流量记录来模拟清空 Agent：Agent 原卷仍有账本时，会再次上报其中的日值。保留同一设备身份而替换其账本，会触发来源变化保护；全新部署应使用明确的新设备记录和身份。
 
 ## 数据边界
 
