@@ -9,19 +9,20 @@
 - 配置与流量设置导入导出，面向新安装；不迁移 Beszel/Beszel+ 历史数据或身份密钥。
 - 温度、风扇、电池、Wi-Fi 从默认采集与常用界面中移除，GPU/SMART 不作为默认采集项目。
 
-当前为 **0.1.0-dev 开发版**，尚未发布公共容器镜像。安装配置直接从公开源码构建。支持 Linux amd64/arm64；尚未完成生产 VPS 长期验收。
+首个 Docker 测试版：[v0.1.0-beta.1](https://github.com/CodeAIX/vpsmonitor/releases/tag/v0.1.0-beta.1)。Hub 和 Agent 均支持 Linux amd64/arm64，测试版尚未完成生产 VPS 长期验收。
 
 ## 安装
 
 ```sh
-git clone https://github.com/CodeAIX/vpsmonitor.git
-cd vpsmonitor
-./scripts/vpsmonitorctl hub start
+mkdir -p ~/vpsmonitor/hub
+cd ~/vpsmonitor/hub
+curl -fL https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.1/hub.compose.yml -o compose.yml
+docker compose pull && docker compose up -d
 ```
 
-默认打开 `http://127.0.0.1:8090` 创建管理员。在 Hub 中复制完整 Agent Compose 到每台 VPS 的新目录，执行 `docker compose up -d --build`。Agent 采用宿主网络并主动连接 Hub，默认无需新开放 Agent 入站端口；只需保留自己的持久卷，无需配置宿主 vnStat。
+默认打开 `http://127.0.0.1:8090` 创建管理员。为远端 VPS 配置可达的 Hub 地址后，从 Hub 复制 Agent Compose 到 VPS 的新目录，执行 `docker compose pull && docker compose up -d`。Agent 使用宿主网络并主动连接 Hub，无需开放 Agent 入站端口或配置 vnStat。
 
-完整步骤、远程 Hub 地址、手动网卡选择、更新/诊断命令和计量边界见 [安装维护指南](docs/DEPLOY.md)，测试证据见 [验证记录](docs/VALIDATION.md)。旧软件及数据可以在新部署确认后删除，本项目不依赖旧数据迁移。
+从零安装、更新、回退与卸载旧 Beszel+ 的步骤见 [安装维护指南](docs/DEPLOY.md)。开发者可使用 [源码部署指南](docs/SOURCE-DEPLOY.md)；[开发版验证记录](docs/VALIDATION.md) 保留原生计量和断线补传的早期验收证据。
 
 ## 开发
 
@@ -34,4 +35,4 @@ cd ../..
 go test -race -tags=testing -p 2 -timeout=20m ./...
 ```
 
-CI 自行测试和构建，不自动跟随原上游或重放补丁。产品版本独立于内部能力基线。设计与后续发布边界见 [独立开发方案](docs/ARCHITECTURE.md)。原作者许可和来源见 [NOTICE](NOTICE) 与 [LICENSE](LICENSE)。
+CI 自行测试和构建，不自动跟随原上游或重放补丁。产品版本独立于内部能力基线。见 [独立开发方案](docs/ARCHITECTURE.md) 和 [发布流程](docs/RELEASING.md)。原作者许可和来源见 [NOTICE](NOTICE) 与 [LICENSE](LICENSE)。

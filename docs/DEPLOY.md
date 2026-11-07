@@ -1,90 +1,108 @@
-# vpsmonitor 开发版安装与维护
+# vpsmonitor v0.1.0-beta.1 安装、更新与卸载旧版
 
-当前为独立项目的首个开发版，使用全新 Hub 和 Agent 数据目录。无需迁移或导入 Beszel/Beszel+ 的数据库、私钥、流量来源和历史记录。已有生产服务在新部署验收后可以停用，旧数据不作为新版依赖。
+这是首个 Docker 测试版。Hub 和 Agent 都支持 Linux `amd64`、`arm64`，使用 Docker Engine 和 Compose 插件。VPS 上无需编译、安装 vnStat 或挂载其数据库。新版从空数据目录和新身份开始，不导入 Beszel/Beszel+ 的历史、私钥或 Token。
 
-支持 Linux VPS 的 amd64、arm64 与 Docker Compose 插件。开发阶段从固定公开源码构建，不依赖尚未发布的镜像标签。需要 Docker 与 Python 3（维护脚本使用系统标准库）。
+| 组件 | 首个测试版镜像 |
+| --- | --- |
+| Hub | `ghcr.io/codeaix/vpsmonitor-hub:v0.1.0-beta.1` |
+| Agent | `ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.1` |
 
-## 1. Hub
+建议先选一台 VPS 试装 Agent，确认在线、资源采样和流量正常后再扩大范围。新旧 Agent 可并行验收：新版通过 WebSocket 主动连接 Hub，不占用旧 Agent 的入站监听端口。新 Hub 使用独立目录和端口。
 
-```sh
-git clone https://github.com/CodeAIX/vpsmonitor.git
-cd vpsmonitor
-./scripts/vpsmonitorctl hub start
-```
+## 1. 从零部署 Hub
 
-默认仅监听 `127.0.0.1:8090`。在本机打开该地址并创建管理员。远程访问可设置反向代理，或在 `deploy/.env` 中明确设置所需绑定与对外 URL，再启动：
-
-```dotenv
-HUB_BIND=0.0.0.0
-HUB_PORT=8090
-HUB_URL=https://monitor.example.com
-```
-
-示例域名须替换为实际地址。Hub 的新数据保存在 `deploy/hub_data`。不要将旧 Beszel 数据目录挂载到新 Hub。
-
-## 2. 每台 VPS 的 Agent
-
-在 Hub 的“添加系统”或“设置 → 通用 Token”中复制 Docker Compose 配置，在 VPS 的一个新目录保存为 `compose.yml`，执行：
+在运行 Hub 的机器上执行：
 
 ```sh
-docker compose up -d --build
+mkdir -p ~/vpsmonitor/hub
+cd ~/vpsmonitor/hub
+curl -fL https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.1/hub.compose.yml -o compose.yml
+docker compose config --quiet
+docker compose pull
+docker compose up -d
 docker compose ps
 ```
 
-配置已包含：宿主网络、原生流量采集、Agent 持久卷、七天资源缓存，以及主动连接 Hub。默认关闭 Agent SSH 监听，无需为 Agent 新开放入站端口。Hub URL 必须是 VPS 实际可访问的地址，不能使用另一台机器的 localhost。
+默认绑定 `127.0.0.1:8090`，数据在当前目录的 `hub_data/`。本机可直接打开 `http://127.0.0.1:8090` 创建管理员；远程 Hub 可先用 SSH 端口转发访问，例如从自己的电脑执行 `ssh -L 8090:127.0.0.1:8090 user@hub-host`，保持连接再打开同一地址。
 
-新 Agent 不需要 vnStat、宿主 vnstatd、UTC 配置或 vnStat 数据库挂载。Linux 宿主网卡计数直接记录到 `/var/lib/vpsmonitor-agent/traffic/`。默认忽略 Docker、veth、回环及常见隧道接口，从最低 metric 的有效 IPv4 默认路由选择唯一出口；支持 bond/VLAN 出口，不把所有接口相加。
+**远端 VPS 必须能访问 Hub。** 在 Hub 所在机器为其配置 HTTPS 反向代理，转发到 `127.0.0.1:8090`，并允许 WebSocket 升级。如果代理和 Hub 不在同一个宿主网络中，将其上游改为代理实际可访问的地址。将下面内容写入 Hub 的 `.env`，再执行 `docker compose up -d`：
 
-IPv6-only、多默认出口等无法明确推断的情况，需要在该 Agent Compose 中将 `VPSMONITOR_TRAFFIC_INTERFACE: auto` 改成实际宿主出口名，例如 `ens7`。隧道接口不作为本版计量口；使用 Tailscale 等复杂路由时需明确选择其底层宿主出口。该参数选择的是宿主接口，而不是普通桥接容器 eth0。安装配置使用 `network_mode: host`；仅添加标记环境变量不能代替宿主网络。
-
-也可在 VPS 克隆本仓库，使用维护脚本。在权限为 0600 的 `deploy/.env` 中填写 Hub 页面提供的 KEY、TOKEN、HUB_URL，可选 TRAFFIC_INTERFACE，然后：
-
-```sh
-./scripts/vpsmonitorctl agent start
-./scripts/vpsmonitorctl agent doctor
+```dotenv
+HUB_URL=https://monitor.example.com
 ```
 
-KEY 是新 Hub 的公钥，不能填旧 Hub 私钥。配置文件包含连接凭据，保存在设备本地，不提交 Git。Docker socket 挂载用于容器监控，不需要容器监控时可删除该挂载。
+用实际域名替换示例。`HUB_URL` 会写进 Hub 生成的 Agent 安装配置；远端 Agent 不能用 Hub 的 `localhost`。如果 8090 已被旧服务占用，先在 `.env` 设 `HUB_PORT=18095`，同时调整反代上游或 SSH 转发的远端端口。仅在明确需要时才修改 `HUB_BIND`。初次创建管理员前，保持入口仅自己可访问。
 
-## 3. 确认接入
+## 2. 从零部署 VPS 上的 Agent
 
-安装后等待 1–2 分钟：设备在线；流量状态正常；唯一出口自动成为 Hub 的计量接口；日值从安装时的新基线累计。空闲时零流量合法。配额、双向/仅出站与账期起始日可在 Hub 中设置；配置导出导入继续可用于新版自身备份。
-
-CPU、内存、磁盘、负载、网速、Docker、在线状态及流量为首版常用项目。温度、风扇、电池、Wi-Fi 的采集及相关系统页面显示已精简，GPU/SMART 不作为默认采集项目。设备版本显示独立的产品版本；内部保留的能力基线不代表跟随旧项目发布。
-
-## 4. 更新与诊断
-
-在克隆仓库的对应主机执行：
+1. 在新版 Hub 中点 **添加系统**，填入 VPS 名称与主机地址，使用该条目生成的新 Token。选择 **复制 Docker Compose**，并保存系统记录。也可以用新版 Hub 的通用 Token 自动注册。
+2. 在 VPS 上 `mkdir -p ~/vpsmonitor/agent`，进入该目录，将复制的内容保存为 `compose.yml`。该文件包含 Token，设置 `chmod 600 compose.yml`。
+3. 核对 `HUB_URL` 是这台 VPS 实际可达的新版地址，再执行：
 
 ```sh
-./scripts/vpsmonitorctl hub status
-./scripts/vpsmonitorctl hub doctor
-./scripts/vpsmonitorctl hub update
-
-# VPS 上执行
-./scripts/vpsmonitorctl agent status
-./scripts/vpsmonitorctl agent doctor
-./scripts/vpsmonitorctl agent update
+cd ~/vpsmonitor/agent
+docker compose config --quiet
+docker compose pull
+docker compose up -d
+docker compose ps
+docker compose logs --tail=50
 ```
 
-update 只允许干净源码工作区，快进更新并重新构建对应容器，保留数据卷。stop 停止指定角色，不删除数据。对 Hub 的 doctor 仅检查容器、持久卷和二进制；页面健康、登录与设备连通性需另行核对。Agent doctor 检查实际 Docker 宿主网络、数据卷、进程健康以及是否有唯一新鲜的原生流量账本，不把“容器正在运行”当作流量正常。
+Hub 生成的配置应包含 `image: ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.1`、`network_mode: host` 和持久化数据挂载；不会出现 `build:`。默认关闭 Agent 的 SSH 监听，不需要在 VPS 新增 Agent 入站防火墙规则。Compose 中的 Docker socket 挂载用于容器监控，不需要这项功能可去掉该挂载。
 
-仅保存了 Hub 生成的独立 Compose 文件时，使用 `docker compose build --pull` 和 `docker compose up -d` 更新该文件指向的源码。若配置固定到某个提交，它不会自动跟随 main；需要先取得新版本配置或明确修改源码引用。
+也可下载 [Agent Compose 模板](https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.1/agent.compose.yml) 并保存为 `compose.yml`，自行配置 `.env`：
 
-## 重新部署与主动清空数据
+```dotenv
+KEY='填入新版 Hub 公钥'
+TOKEN='填入新版 Hub 生成的 Agent Token'
+HUB_URL=https://monitor.example.com
+# TRAFFIC_INTERFACE=ens7
+```
 
-旧 Beszel/Beszel+ 的 Agent 和数据可以在新部署验证后直接清理，无需将其数据库、私钥或来源记录导入本项目。旧 vnStat 若仍供其他工具使用，可继续保留，vpsmonitor 不读取它。
+模板方式的数据目录是 `agent_data/`，Hub 生成方式的是 `vpsmonitor_agent_data/`。选定一种方式后继续使用同一个文件和目录，避免意外换卷。`KEY` 是公钥；不要复制 Hub 私钥。`.env` 同样应设权限 `0600`。
 
-vpsmonitor 自身正常更新或容器重启应保留原数据卷。如果明确要丢弃某台设备的新账本并重新安装，先在 Hub 中删除该设备，再新建记录、取得新的 Token，使用新的空 Agent 数据目录部署。删除操作会清除该设备自己的资源/流量记录和套餐设置，需要重新设置，但不要求清空其他设备或手工修改数据库。
+## 3. 验收流量与连接
 
-不要只删 Hub 的流量记录来模拟清空 Agent：Agent 原卷仍有账本时，会再次上报其中的日值。保留同一设备身份而替换其账本，会触发来源变化保护；全新部署应使用明确的新设备记录和身份。
+安装后等待 1–2 分钟，在 Hub 确认该设备在线，CPU、内存等开始显示，流量状态正常。再产生少量 VPS 网络流量，等采样刷新后检查 RX/TX 是否增长。
 
-## 数据边界
+- Agent 默认选择唯一符合条件的 IPv4 默认出口，排除 Docker 网桥、veth、回环和常见隧道。IPv6-only、多出口或自动识别不符时，在复制的 Compose 中把 `VPSMONITOR_TRAFFIC_INTERFACE: auto` 改为实际宿主出口名（如 `ens7`）；下载模板时改 `.env` 的 `TRAFFIC_INTERFACE`。再执行 `docker compose up -d`。
+- 首次启动只建立基线，日值从安装后开始。配额、双向/仅出站和账期日在 Hub 的系统流量设置中填写。当前以 UTC 日统计，安装当日的周期可能显示不完整；用量可能与云厂商账单有差异。
+- 在 Agent 目录可以运行 `docker compose exec -T "$(docker compose config --services)" /agent health`。它检查连接标记；仍以 Hub 设备在线、资源刷新、实际流量增长作为验收。失败时检查 Hub 地址、TLS/WebSocket 代理和新 Token，再看 Agent 日志。
 
-- 第一次观察仅建立基线，不把宿主开机以来的累计流量算成安装后的用量。
-- 每 30 秒采样并原子持久化基线和 UTC 日值，日值独立保留最多 400 天，不随七天资源快照删除。
-- 正常采样跨午夜以区间终点归日，存在采样分辨率范围内的边界误差；不保证与云厂商账单完全一致。
-- Agent 重启后，内核计数连续且持久卷保留时，可恢复同日累计差额。长时间停采跨日的差额保存为未分配量，相关日期标为不完整，不猜测每天的分配。
-- 宿主重启、接口身份/计数复位、时钟回退或存储异常会重新建立基线或暂停采集，并标记异常/不完整。硬断电可能丢失未落盘的最后采样区间。
-- Docker/宿主网络变更后应重新核对计量接口。不要用修改配置的方式将两条不同接口的历史视为同一来源。
-- 本开发版尚未完成真实生产 VPS 的长期验收；本地 Linux VM 的测试流量不能视为已核对生产账单。
+## 4. 更新和回退 vpsmonitor
+
+等下一个版本发布后，Hub 和 Agent 分别在各自原目录修改**同一份**部署配置：
+
+- 下载模板方式：把 `.env` 中 `VPSMONITOR_VERSION` 设为新发布页给出的完整标签（含 `v`）。保留已有 `KEY`、`TOKEN`、`HUB_URL` 和端口配置。
+- Hub 生成的 Agent Compose：只改 `image:` 的版本标签。保留当前目录、服务名、挂载和身份配置。
+
+在每台对应主机执行：
+
+```sh
+docker compose config --quiet
+docker compose pull && docker compose up -d
+docker compose ps
+```
+
+建议先更新 Hub 并确认健康，再更新一台 Agent 验证后继续。更新保留持久卷、账本和七天资源缓存。不要用 `down -v` 或清空目录更新。需要回退时先查目标版本的数据库兼容说明；如果新版改动了数据格式，用升级前的备份恢复对应数据目录，再切回旧镜像标签。
+
+## 5. 卸载旧 Beszel+
+
+确认该 VPS 在新版在线且流量增长后，在该 VPS **只处理旧 Agent**。等所有要保留监控的 VPS 都接入新版后，再到旧 Hub 所在机器单独卸载旧 Hub。以下步骤不会迁移旧历史。
+
+先列出容器，按旧镜像和名字确认目标，别选到 `vpsmonitor`：
+
+```sh
+docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
+OLD_CONTAINER=这里替换成已确认的旧容器名
+docker inspect --format '{{.Config.Image}}' "$OLD_CONTAINER"
+docker inspect --format '{{range .Mounts}}{{println .Type .Name .Source "->" .Destination}}{{end}}' "$OLD_CONTAINER"
+```
+
+- **旧 Compose 部署**：在旧项目目录运行 `docker compose ps`（使用原来的 `-f`、项目名及覆盖文件），确认旧服务名。运行 `docker compose stop <旧服务名>`，确认停的是旧服务，再运行 `docker compose rm <旧服务名>`。删除或停用旧的 Compose 配置，避免下次启动时重建它。与其它业务共用项目时，不要对整个项目执行 `down`。
+- **旧 `docker run` 部署**：确认上面的目标和挂载后，执行 `docker stop "$OLD_CONTAINER"`，再执行 `docker rm "$OLD_CONTAINER"`。若用 fnOS Docker 界面，按同一容器名和镜像定位，先停用再移除旧容器。
+- **丢弃旧数据**：容器移除后，按 `inspect` 输出，仅删除确认由旧 Beszel+ 独占的数据目录或具名卷。具名卷可用 `docker volume rm <已确认的旧数据卷>`；绑定目录可用文件管理器删除该确切目录。不要删除 Docker socket、共享目录或新版的 `hub_data`/`agent_data`/`vpsmonitor_agent_data`。旧 vnStat 无需改动；若还有其他工具依赖它，继续保留。
+
+如果仍需试用一段时间，可先只停旧服务，验收后再删除其数据。不要用 `docker system prune` 或 `docker volume prune` 批量卸载。
+
+开发者若要从源码构建，见 [源码部署指南](SOURCE-DEPLOY.md)。
