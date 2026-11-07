@@ -18,7 +18,9 @@ Agent 使用 Docker host 网络、cap-drop ALL、no-new-privileges 和自己的�
 
 使用受控网络访问产生实际接口流量；Hub 在相同来源采样时间的 RX/TX 与 Agent 持久化账本逐字节一致。Hub 停机期间 Agent 仍采样；重启 Agent 后账本 UUID 保持不变；Hub 恢复后补回两条真实离线资源分钟样本，流量继续同步。
 
-随后用仓库中的 `vpsmonitorctl hub start` 和 `agent start` 真实构建并创建 Compose 项目；保留的是本次新程序自身的数据。两个运行镜像的构建来源均为上述功能提交。Hub 与 Agent 的 doctor 已执行，Agent doctor 检查宿主网络、数据卷、进程健康、出口与新鲜账本。API 再次确认设备在线、native/ok、接口自动选择、账本身份保留。
+随后用仓库中的 `vpsmonitorctl hub start` 和 `agent start` 真实构建并创建 Compose 项目；保留的是本次新程序自身的数据。初次运行镜像的构建来源均为上述功能提交。Hub 与 Agent 的 doctor 已执行，Agent doctor 检查宿主网络、数据卷、进程健康、出口与新鲜账本。API 再次确认设备在线、native/ok、接口自动选择、账本身份保留。
+
+另实际执行 `hub update` 与 `agent update`，更新到 `9e6086ad835c481576c61061963069a08674d218`。更新命令执行了快进拉取、构建及容器重建；API 产品提交与镜像来源一致。随后确认原设备在线、流量正常、来源 UUID/创建时间不变、更新前已有日计数未减少，Agent doctor 再次通过。此更新仅包含后续测试/文档变化，功能实现与最初功能提交一致。
 
 页面已人工核对：独立名称/版本；流量列位于磁盘之后；温度、电池、Wi-Fi、GPU 不出现在可见列列表；系统详情保留 CPU/内存/磁盘/网络/Docker/流量和七天缓存状态。以下为本地 VM 的实际采集结果，20 MB 配额仅用于本地展示测试：
 
@@ -26,7 +28,7 @@ Agent 使用 Docker host 网络、cap-drop ALL、no-new-privileges 和自己的�
 
 ## GitHub CI
 
-[完整回归与双架构构建](https://github.com/CodeAIX/vpsmonitor/actions/runs/42326939709)，测试源码 `ce41927b5981dff0c98208d07440fbbc4d6bd22b`：Web/Hub 任务已通过；核心全包竞态任务仍在执行，最终结果待补录。
+[完整回归与双架构构建](https://github.com/CodeAIX/vpsmonitor/actions/runs/42326939709)，测试源码 `ce41927b5981dff0c98208d07440fbbc4d6bd22b`：**两项任务全部通过**。包含前端生产构建、42 项前端测试、`go test -race -p 2 -tags=testing -timeout=20m ./...` 全包竞态回归，以及 Hub/Agent 的 Linux amd64、arm64 构建。后续仅更新文档和验证截图，不改变已验证功能代码。
 
 此前一轮全量检查中，流量补传夹具每次用当前时间重新生成来源创建时间，慢速执行时触发了正确的来源变化保护，因此该轮不能计作全绿。现已固定夹具来源身份并明确旧事件时间，定向竞态重复测试三轮通过；未放宽生产来源保护。开发期另有取消的流水线，涉及独立命名后的格式检查和固定测试向量调整，不计作通过。
 
