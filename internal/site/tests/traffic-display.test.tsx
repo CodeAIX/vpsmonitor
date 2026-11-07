@@ -7,12 +7,12 @@ import {
 	trafficQuota,
 	trafficQuotaInput,
 	trafficRange,
-	trafficSplit,
 } from "../src/lib/traffic-display"
 import type { TrafficView } from "../src/types"
 
 mock.module("@lingui/core/macro", () => ({
-	t: (strings: TemplateStringsArray, ...values: unknown[]) => strings.reduce((text, part, i) => text + part + (values[i] ?? ""), ""),
+	t: (strings: TemplateStringsArray, ...values: unknown[]) =>
+		strings.reduce((text, part, i) => text + part + (values[i] ?? ""), ""),
 }))
 mock.module("@/lib/utils", () => ({ decimalString: (value: number, digits: number) => value.toFixed(digits) }))
 const { TrafficUsageCell } = await import("../src/components/traffic/traffic-usage-cell")
@@ -91,26 +91,22 @@ describe("compact traffic meter", () => {
 		last_success_at: "2026-11-06T05:00:00Z",
 	} as TrafficView
 
-	test("keeps both direction shares and shows the billing countdown and coverage", () => {
+	test("shows one rounded meter and keeps coverage out of the visible cell", () => {
 		const html = renderToStaticMarkup(<TrafficUsageCell compact item={item} />)
 		expect(html).toContain('aria-valuenow="100"')
 		expect(html).toContain("width:100%")
-		expect(html).toContain("width:25%")
-		expect(html).toContain("width:75%")
-		expect(html).toContain("bg-chart-2")
-		expect(html).toContain("bg-chart-1")
+		expect(html).toContain("rounded-full bg-green-500")
 		expect(html).toContain("2026-10-15 → 2026-11-15")
 		expect(html).toContain("Offline · last known")
-		expect(html.replace(/<[^>]*>/g, "")).toBe("120.0%9 days leftIncomplete period")
+		expect(html.replace(/<[^>]*>/g, "")).toBe("120.0%9 days left")
 	})
 
 	test("shows only outbound usage for tx billing and preserves null versus zero", () => {
-		expect(trafficSplit(600, 200, "rx_tx")).toEqual({ rx: 75, tx: 25 })
-		expect(trafficSplit(600, 200, "tx")).toEqual({ rx: 0, tx: 100 })
-		expect(trafficSplit(Number.MAX_SAFE_INTEGER, 1, "rx_tx")).toBeNull()
-		const tx = renderToStaticMarkup(<TrafficUsageCell compact item={{ ...item, count_mode: "tx" }} />)
-		expect(tx).not.toContain("bg-chart-2")
-		expect(tx).toContain("bg-chart-1")
+		const tx = renderToStaticMarkup(
+			<TrafficUsageCell compact item={{ ...item, count_mode: "tx", used_bytes: 90, percent: 90 }} />
+		)
+		expect(tx).toContain('aria-valuenow="90"')
+		expect(tx).toContain("Outbound only")
 		const zero = renderToStaticMarkup(
 			<TrafficUsageCell compact item={{ ...item, rx_bytes: 0, tx_bytes: 0, used_bytes: 0, percent: 0 }} />
 		)

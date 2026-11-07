@@ -206,6 +206,7 @@ export function SystemsTableColumns(viewMode: "table" | "grid", traffic: Record<
 		},
 		{
 			id: "traffic",
+			minSize: 168,
 			name: () => t`Traffic`,
 			accessorFn: (system) => traffic[system.id]?.settings.enabled === false ? undefined : traffic[system.id]?.percent ?? undefined,
 			Icon: ArrowUpDownIcon,

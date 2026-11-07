@@ -26,16 +26,6 @@ export function billingDaysRemaining(end: string, now = Date.now()) {
 	return days < 1 ? 0 : Math.ceil(days)
 }
 
-/** Shares of the used fill, so exceeding quota preserves the Rx/Tx ratio. */
-export function trafficSplit(rx: number | null, tx: number | null, mode: "tx" | "rx_tx") {
-	if (tx == null || !Number.isSafeInteger(tx) || tx < 0) return null
-	if (mode === "tx") return { rx: 0, tx: 100 }
-	if (rx == null || !Number.isSafeInteger(rx) || rx < 0 || !Number.isSafeInteger(rx + tx)) return null
-	if (rx + tx === 0) return { rx: 0, tx: 0 }
-	const received = (rx / (rx + tx)) * 100
-	return { rx: received, tx: 100 - received }
-}
-
 export function trafficQuota(input: string, factor: number) {
 	const places = factor === 1e9 ? 9 : factor === 1e12 ? 12 : -1
 	const value = input.trim() || "0"

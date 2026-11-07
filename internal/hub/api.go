@@ -197,6 +197,7 @@ func (h *Hub) registerApiRoutes(se *core.ServeEvent) error {
 	// get config.yml content
 	apiAuth.GET("/config-yaml", config.GetYamlConfig).BindFunc(requireAdminRole)
 	apiAuth.POST("/config-yaml/import", config.ImportYamlConfig).BindFunc(requireAdminRole)
+	apiAuth.POST("/config-yaml/sync-preview", config.PreviewSyncConfig).BindFunc(requireAdminRole)
 	// The shared listener is only used by untagged development fixtures.
 	if h.agentURL == "" && !vpsmonitor.RequiresTailnet() {
 		apiNoAuth.GET("/agent-connect", h.handleAgentConnect)

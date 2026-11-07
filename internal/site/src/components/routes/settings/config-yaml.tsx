@@ -2,10 +2,9 @@ import { t } from "@lingui/core/macro"
 import { Trans } from "@lingui/react/macro"
 import { redirectPage } from "@nanostores/router"
 import clsx from "clsx"
-import { AlertCircleIcon, FileSlidersIcon, LoaderCircleIcon } from "lucide-react"
+import { FileSlidersIcon, LoaderCircleIcon } from "lucide-react"
 import { useState } from "react"
 import { $router } from "@/components/router"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
@@ -15,11 +14,37 @@ import { toast } from "@/components/ui/use-toast"
 import { isAdmin, pb } from "@/lib/api"
 import ImportSystems from "./import-systems"
 
+type SyncPreview = {
+	rows: { id?: string; name: string; action: "add" | "update" | "keep"; ownership_changed: boolean }[]
+	retained: number
+}
+
 export default function ConfigYaml() {
 	const [configContent, setConfigContent] = useState<string>("")
 	const [isLoading, setIsLoading] = useState(false)
 	const [includeTraffic, setIncludeTraffic] = useState(true)
 	const [exportFormat, setExportFormat] = useState("combined")
+
+	const [syncPreview, setSyncPreview] = useState<SyncPreview>()
+	const [previewLoading, setPreviewLoading] = useState(false)
+
+	async function previewSync(file: File) {
+		setSyncPreview(undefined)
+		setPreviewLoading(true)
+		try {
+			if (file.size > 1024 * 1024) throw new Error(t`The YAML file must be 1 MiB or smaller.`)
+			setSyncPreview(
+				await pb.send<SyncPreview>("/api/vpsmonitor/config-yaml/sync-preview", {
+					method: "POST",
+					body: { config: await file.text() },
+				})
+			)
+		} catch (error: any) {
+			toast({ title: t`Error`, description: error.message, variant: "destructive" })
+		} finally {
+			setPreviewLoading(false)
+		}
+	}
 
 	const ButtonIcon = isLoading ? LoaderCircleIcon : FileSlidersIcon
 
@@ -70,22 +95,49 @@ export default function ConfigYaml() {
 					</p>
 					<p className="text-sm text-muted-foreground leading-relaxed">
 						<Trans>
-							On each restart, systems in the database will be updated to match the systems defined in the file.
+							Startup sync matches by device ID first and keeps devices outside the file. Omit users to keep ownership.
 						</Trans>
 					</p>
-					<Alert className="my-4 border-destructive text-destructive w-auto table md:pe-6">
-						<AlertCircleIcon className="size-4.5 stroke-destructive" />
-						<AlertTitle>
-							<Trans>Caution - potential data loss</Trans>
-						</AlertTitle>
-						<AlertDescription>
-							<p>
-								<Trans>
-									Existing systems not defined in <code>config.yml</code> will be deleted. Please make regular backups.
-								</Trans>
+					<div className="my-3 flex flex-wrap items-center gap-3">
+						<Button type="button" variant="outline" onClick={() => fetchConfig("sync")} disabled={isLoading}>
+							<Trans>Export for this Hub</Trans>
+						</Button>
+						<Label htmlFor="sync-preview-file">
+							<Trans>Preview startup sync</Trans>
+						</Label>
+						<input
+							id="sync-preview-file"
+							type="file"
+							accept=".yaml,.yml"
+							disabled={previewLoading}
+							className="text-sm file:me-2 file:rounded-md file:bg-muted file:px-2 file:py-1"
+							onChange={(e) => {
+								const file = e.currentTarget.files?.[0]
+								e.currentTarget.value = ""
+								if (file) void previewSync(file)
+							}}
+						/>
+					</div>
+					{syncPreview && (
+						<div className="my-3 text-sm" aria-live="polite">
+							<p className="text-muted-foreground">
+								<Trans>Unlisted devices kept: {syncPreview.retained}. Preview only; no changes applied.</Trans>
 							</p>
-						</AlertDescription>
-					</Alert>
+							<ul className="mt-2 max-h-48 overflow-auto space-y-1">
+								{syncPreview.rows.map((row, index) => (
+									<li key={row.id ?? index} className="break-words">
+										{row.name} · {row.action === "add" ? t`Add` : row.action === "update" ? t`Update` : t`Keep`}
+										{row.ownership_changed && (
+											<>
+												{" "}
+												· <Trans>Ownership changes</Trans>
+											</>
+										)}
+									</li>
+								))}
+							</ul>
+						</div>
+					)}
 				</details>
 				{configContent && (
 					<Textarea
@@ -132,7 +184,12 @@ export default function ConfigYaml() {
 							const url = URL.createObjectURL(new Blob([configContent], { type: "text/yaml;charset=utf-8" }))
 							const link = document.createElement("a")
 							link.href = url
-							link.download = exportFormat === "traffic" ? "vpsmonitor-traffic.yml" : "vpsmonitor-config.yml"
+							link.download =
+								exportFormat === "sync"
+									? "config.yml"
+									: exportFormat === "traffic"
+										? "vpsmonitor-traffic.yml"
+										: "vpsmonitor-config.yml"
 							link.click()
 							setTimeout(() => URL.revokeObjectURL(url), 1000)
 						}}

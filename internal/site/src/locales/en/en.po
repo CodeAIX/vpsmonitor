@@ -65,6 +65,10 @@ msgstr "{count, plural, one {{countString} hour} other {{countString} hours}}"
 msgid "{count, plural, one {{countString} minute} few {{countString} minutes} many {{countString} minutes} other {{countString} minutes}}"
 msgstr "{count, plural, one {{countString} minute} few {{countString} minutes} many {{countString} minutes} other {{countString} minutes}}"
 
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "{days} days left"
+msgstr "{days} days left"
+
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 msgid "{daysLeft, plural, one {# day} other {# days}}"
 msgstr "{daysLeft, plural, one {# day} other {# days}}"
@@ -100,6 +104,10 @@ msgstr "{value, plural, one {# day} other {# days}}"
 #: src/components/traffic/traffic-settings-dialog.tsx
 msgid "0 means no quota. 1 TB = 1,000 GB."
 msgstr "0 means no quota. 1 TB = 1,000 GB."
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "1 day left"
+msgstr "1 day left"
 
 #: src/lib/utils.ts
 msgid "1 hour"
@@ -165,6 +173,7 @@ msgid "Active state"
 msgstr "Active state"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
+#: src/components/routes/settings/config-yaml.tsx
 msgid "Add"
 msgstr "Add"
 
@@ -225,6 +234,10 @@ msgstr "Agent"
 #: src/components/routes/system/history-status.tsx
 msgid "Agent disconnected; showing the last synced cache."
 msgstr "Agent disconnected; showing the last synced cache."
+
+#: src/components/install-dropdowns.tsx
+msgid "Agent installation settings are not ready"
+msgstr "Agent installation settings are not ready"
 
 #: src/components/routes/system/history-status.tsx
 msgid "Agent offline cache: 7 days, one sample per minute."
@@ -488,8 +501,8 @@ msgid "Capacity"
 msgstr "Capacity"
 
 #: src/components/routes/settings/config-yaml.tsx
-msgid "Caution - potential data loss"
-msgstr "Caution - potential data loss"
+#~ msgid "Caution - potential data loss"
+#~ msgstr "Caution - potential data loss"
 
 #: src/components/routes/settings/general.tsx
 #~ msgid "Celsius (°C)"
@@ -696,20 +709,21 @@ msgstr "Copy bulk config"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgctxt "Button to copy docker compose file content"
 msgid "Copy docker compose"
 msgstr "Copy docker compose"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgctxt "Button to copy docker run command"
-msgid "Copy docker run"
-msgstr "Copy docker run"
+#~ msgctxt "Button to copy docker run command"
+#~ msgid "Copy docker run"
+#~ msgstr "Copy docker run"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgctxt "Environment variables"
-msgid "Copy env"
-msgstr "Copy env"
+#~ msgctxt "Environment variables"
+#~ msgid "Copy env"
+#~ msgstr "Copy env"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgctxt "Copy alerts from another system"
@@ -750,8 +764,8 @@ msgid "Copy token"
 msgstr "Copy token"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "Copy YAML"
-msgstr "Copy YAML"
+#~ msgid "Copy YAML"
+#~ msgstr "Copy YAML"
 
 #: src/components/routes/system.tsx
 msgctxt "Core system metrics"
@@ -1075,6 +1089,7 @@ msgstr "Ephemeral"
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/config-yaml.tsx
+#: src/components/routes/settings/config-yaml.tsx
 #: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/heartbeat.tsx
@@ -1102,8 +1117,8 @@ msgid "Exec main PID"
 msgstr "Exec main PID"
 
 #: src/components/routes/settings/config-yaml.tsx
-msgid "Existing systems not defined in <0>config.yml</0> will be deleted. Please make regular backups."
-msgstr "Existing systems not defined in <0>config.yml</0> will be deleted. Please make regular backups."
+#~ msgid "Existing systems not defined in <0>config.yml</0> will be deleted. Please make regular backups."
+#~ msgstr "Existing systems not defined in <0>config.yml</0> will be deleted. Please make regular backups."
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Exited active"
@@ -1130,6 +1145,10 @@ msgstr "Export"
 #: src/components/routes/settings/config-yaml.tsx
 msgid "Export configuration"
 msgstr "Export configuration"
+
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Export for this Hub"
+msgstr "Export for this Hub"
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "Export traffic settings only"
@@ -1431,6 +1450,10 @@ msgstr "Incomplete period"
 msgid "Initializing"
 msgstr "Initializing"
 
+#: src/components/add-system.tsx
+msgid "Install and authorize Tailscale on the VPS, then run the Agent preflight."
+msgstr "Install and authorize Tailscale on the VPS, then run the Agent preflight."
+
 #: src/components/routes/settings/import-systems.tsx
 msgid "Interface"
 msgstr "Interface"
@@ -1469,6 +1492,10 @@ msgstr "Invalid traffic settings"
 msgid "Invalid YAML. Use an original vpsmonitor export with 1–1000 systems, at most 1 MiB. Check names, hosts, ports, tokens and users."
 msgstr "Invalid YAML. Use an original vpsmonitor export with 1–1000 systems, at most 1 MiB. Check names, hosts, ports, tokens and users."
 
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Keep"
+msgstr "Keep"
+
 #: src/components/routes/settings/import-systems.tsx
 msgid "Keep current traffic settings; enable traffic updates to apply this row"
 msgstr "Keep current traffic settings; enable traffic updates to apply this row"
@@ -1490,6 +1517,10 @@ msgstr "Layout"
 #: src/components/routes/settings/general.tsx
 msgid "Layout width"
 msgstr "Layout width"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Less than 1 day left"
+msgstr "Less than 1 day left"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Lifecycle"
@@ -1591,6 +1622,7 @@ msgstr "Manage display and notification preferences."
 msgid "Manage systems with config.yml (advanced)"
 msgstr "Manage systems with config.yml (advanced)"
 
+#: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "Manual setup instructions"
@@ -1830,8 +1862,8 @@ msgid "Offline history is not enabled on this agent. Update to the Plus Agent to
 msgstr "Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache."
 
 #: src/components/routes/settings/config-yaml.tsx
-msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
-msgstr "On each restart, systems in the database will be updated to match the systems defined in the file."
+#~ msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
+#~ msgstr "On each restart, systems in the database will be updated to match the systems defined in the file."
 
 #. placeholder {0}: alert.value
 #: src/components/active-alerts.tsx
@@ -1899,6 +1931,10 @@ msgstr "Outbound only"
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Overwrite existing alerts"
 msgstr "Overwrite existing alerts"
+
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Ownership changes"
+msgstr "Ownership changes"
 
 #. Software package
 #: src/components/routes/system/package-updates-table.tsx
@@ -2075,6 +2111,10 @@ msgstr "Preserve original user assignments by email"
 msgid "Preview import"
 msgstr "Preview import"
 
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Preview startup sync"
+msgstr "Preview startup sync"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "Process started"
@@ -2164,6 +2204,10 @@ msgstr "Refresh"
 #: src/components/routes/system/traffic-panel.tsx
 msgid "Refresh traffic"
 msgstr "Refresh traffic"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Refreshing billing period"
+msgstr "Refreshing billing period"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Relationships"
@@ -2467,6 +2511,10 @@ msgstr "Stale"
 msgid "Start Time"
 msgstr "Start Time"
 
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Startup sync matches by device ID first and keeps devices outside the file. Omit users to keep ownership."
+msgstr "Startup sync matches by device ID first and keeps devices outside the file. Omit users to keep ownership."
+
 #. Context: alert state (active or resolved)
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -2613,6 +2661,10 @@ msgstr "The import preview changed. Review the new preview before confirming aga
 #: src/components/routes/settings/heartbeat.tsx
 msgid "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
 msgstr "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
+
+#: src/components/routes/settings/config-yaml.tsx
+msgid "The YAML file must be 1 MiB or smaller."
+msgstr "The YAML file must be 1 MiB or smaller."
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Then log into the backend and reset your user account password in the users table."
@@ -2882,6 +2934,11 @@ msgstr "Unknown"
 msgid "Unlimited"
 msgstr "Unlimited"
 
+#. placeholder {0}: syncPreview.retained
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Unlisted devices kept: {0}. Preview only; no changes applied."
+msgstr "Unlisted devices kept: {0}. Preview only; no changes applied."
+
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Unsupported platform"
 msgstr "Unsupported platform"
@@ -2901,6 +2958,7 @@ msgstr "Up ({upSystemsLength})"
 msgid "Up to date"
 msgstr "Up to date"
 
+#: src/components/routes/settings/config-yaml.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Update"
 msgstr "Update"

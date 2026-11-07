@@ -1,6 +1,6 @@
 import { t } from "@lingui/core/macro"
 import type { TrafficView } from "@/types"
-import { billingDaysRemaining, trafficBytes, trafficProgress, trafficSplit, trafficTimestamp } from "@/lib/traffic-display"
+import { billingDaysRemaining, trafficBytes, trafficProgress, trafficTimestamp } from "@/lib/traffic-display"
 import { decimalString } from "@/lib/utils"
 
 export function trafficStatusLabel(status: string) {
@@ -87,9 +87,8 @@ export function TrafficUsageCell({
 								: t`Coverage unverified`
 	const description = `${item.period_start} → ${item.period_end_exclusive} UTC · ${item.count_mode === "tx" ? t`Outbound only` : t`Received + sent`} · ${trafficTimestamp(item.last_success_at)} · ${item.error_code || label}`
 	if (compact) {
-		const split = trafficSplit(item.rx_bytes, item.tx_bytes, item.count_mode)
 		const percent =
-			item.used_bytes != null && item.quota_bytes > 0 && item.settings.enabled !== false && split ? item.percent : null
+			item.used_bytes != null && item.quota_bytes > 0 && item.settings.enabled !== false ? item.percent : null
 		const tooltip = [
 			`${t`Traffic`}: ${trafficBytes(item.used_bytes, unit)} / ${item.quota_bytes > 0 ? trafficBytes(item.quota_bytes, unit) : t`No quota`}`,
 			`${t`Received`} (Rx): ${trafficBytes(item.rx_bytes, unit)} · ${t`Sent`} (Tx): ${trafficBytes(item.tx_bytes, unit)}`,
@@ -102,12 +101,17 @@ export function TrafficUsageCell({
 			.filter(Boolean)
 			.join("\n")
 		const days = billingDaysRemaining(item.period_end_exclusive)
-		const countdown = item.settings.enabled === false || !item.period_end_exclusive ? undefined
-			: days == null ? t`Refreshing billing period`
-				: days === 0 ? t`Less than 1 day left`
-					: days === 1 ? t`1 day left` : t`${days} days left`
-		return <CompactTrafficMeter description={tooltip} percent={percent} split={split} countdown={countdown}
-			incomplete={item.coverage === "partial" && item.settings.enabled !== false} />
+		const countdown =
+			item.settings.enabled === false || !item.period_end_exclusive
+				? undefined
+				: days == null
+					? t`Refreshing billing period`
+					: days === 0
+						? t`Less than 1 day left`
+						: days === 1
+							? t`1 day left`
+							: t`${days} days left`
+		return <CompactTrafficMeter description={tooltip} percent={percent} countdown={countdown} />
 	}
 	return (
 		<div className="min-w-0 max-w-52 text-xs" title={description}>
@@ -148,27 +152,23 @@ export function TrafficUsageCell({
 function CompactTrafficMeter({
 	description,
 	percent,
-	split,
 	countdown,
-	incomplete,
 }: {
 	description: string
 	percent?: number | null
-	split?: { rx: number; tx: number } | null
 	countdown?: string
-	incomplete?: boolean
 }) {
 	const width = trafficProgress(percent)
 	const value = width == null ? "—" : `${decimalString(percent!, percent! >= 10 ? 1 : 2)}%`
 	return (
 		<div
-			className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-0.5 tabular-nums tracking-tight w-full min-w-0"
+			className="flex gap-2 items-center tabular-nums tracking-tight w-full min-w-0"
 			title={description}
 			aria-label={description}
 		>
 			<span className={`min-w-8 shrink-0${percent != null && percent >= 100 ? " text-red-500" : ""}`}>{value}</span>
 			<span
-				className="flex-1 min-w-8 flex bg-muted h-[1em] rounded-sm overflow-hidden"
+				className="relative flex-1 min-w-8 bg-muted h-[1em] rounded-full overflow-hidden"
 				role={width == null ? undefined : "progressbar"}
 				aria-label={width == null ? undefined : t`Traffic quota usage`}
 				aria-valuenow={width ?? undefined}
@@ -176,19 +176,15 @@ function CompactTrafficMeter({
 				aria-valuemax={width == null ? undefined : 100}
 				aria-valuetext={width == null ? undefined : value}
 			>
-				{width != null && split && (
-					<span className="flex h-full shrink-0" style={{ width: `${width}%` }} aria-hidden="true">
-						{split.rx > 0 && <span className="h-full shrink-0 bg-chart-2" style={{ width: `${split.rx}%` }} />}
-						{split.tx > 0 && <span className="h-full shrink-0 bg-chart-1" style={{ width: `${split.tx}%` }} />}
+				{width != null && (
+					<span className="block h-full rounded-full bg-green-500" style={{ width: `${width}%` }} aria-hidden="true" />
+				)}
+				{countdown && (
+					<span className="pointer-events-none absolute inset-x-1 top-1/2 -translate-y-1/2 truncate text-center text-[0.6875rem] leading-none text-zinc-700 dark:text-zinc-200 dark:[text-shadow:0_1px_2px_#000]">
+						{countdown}
 					</span>
 				)}
 			</span>
-			{(countdown || incomplete) && (
-				<div className="col-span-2 flex flex-wrap gap-x-1.5 text-[0.6875rem] leading-tight text-muted-foreground">
-					{countdown && <span>{countdown}</span>}
-					{incomplete && <span className="text-amber-700 dark:text-amber-400">{t`Incomplete period`}</span>}
-				</div>
-			)}
 		</div>
 	)
 }

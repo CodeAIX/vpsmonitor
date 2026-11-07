@@ -9,14 +9,14 @@
 - 配置与流量设置导入导出，面向新安装；不迁移 Beszel/Beszel+ 历史数据或身份密钥。
 - 温度、风扇、电池、Wi-Fi 从默认采集与常用界面中移除，GPU/SMART 不作为默认采集项目。
 
-当前 Docker 测试版：[v0.1.0-beta.2](https://github.com/CodeAIX/vpsmonitor/releases/tag/v0.1.0-beta.2)。Hub 和 Agent 均支持 Linux amd64/arm64，测试版尚未完成生产 VPS 长期验收。
+当前 Docker 测试版：[v0.1.0-beta.3](https://github.com/CodeAIX/vpsmonitor/releases/tag/v0.1.0-beta.3)。Hub 和 Agent 均支持 Linux amd64/arm64，测试版尚未完成生产 VPS 长期验收。
 
 ## 安装
 
 ```sh
 mkdir -p ~/vpsmonitor/hub
 cd ~/vpsmonitor/hub
-curl -fL https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.2/hub.compose.yml -o compose.yml
+curl -fL https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.3/hub.compose.yml -o compose.yml
 ```
 
 模板下载后先按部署指南配置 Tailscale，再启动 Hub。默认网页地址为 `http://127.0.0.1:8090`。Agent 使用专用 Tailscale 入口。在两端完成宿主 Tailscale 预检，并按部署指南设置 `AGENT_HUB_URL` 与 Tailscale Serve，再从 Hub 复制 Agent Compose 到 VPS。

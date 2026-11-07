@@ -89,7 +89,7 @@ func ImportYamlConfig(e *core.RequestEvent) error {
 	if req.UserMode != "current" && req.UserMode != "match" {
 		return e.BadRequestError("Invalid user mapping mode.", nil)
 	}
-	// A startup sync would otherwise silently delete newly imported systems.
+	// Keep the one-time importer separate from file-managed configuration.
 	if _, err := os.Stat(filepath.Join(e.App.DataDir(), "config.yml")); !os.IsNotExist(err) {
 		return e.JSON(http.StatusConflict, map[string]string{"code": "managed_config"})
 	}
@@ -187,6 +187,11 @@ func parseImport(content string) (config, error) {
 	}
 	if cfg.Kind != "" && cfg.TrafficSchema != 1 {
 		return cfg, errors.New("missing config schema")
+	}
+	for _, entry := range cfg.Systems {
+		if entry.ID != "" {
+			return cfg, errors.New("same-Hub sync configuration")
+		}
 	}
 	return cfg, nil
 }

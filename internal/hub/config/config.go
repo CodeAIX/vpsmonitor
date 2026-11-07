@@ -4,8 +4,10 @@ package config
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"uuid"
 
 	"github.com/CodeAIX/vpsmonitor/internal/entities/system"
@@ -24,6 +26,7 @@ type config struct {
 }
 
 type systemConfig struct {
+	ID      string            `yaml:"id,omitempty"`
 	Name    string            `yaml:"name"`
 	Host    string            `yaml:"host"`
 	Port    uint16            `yaml:"port,omitempty"`
@@ -37,122 +40,208 @@ func SyncSystems(e *core.ServeEvent) error {
 	h := e.App
 	configPath := filepath.Join(h.DataDir(), "config.yml")
 	configData, err := os.ReadFile(configPath)
-	if err != nil {
+	if os.IsNotExist(err) {
 		return nil
 	}
-
-	var config config
-	err = yaml.Unmarshal(configData, &config)
 	if err != nil {
-		return fmt.Errorf("failed to parse config.yml")
+		return fmt.Errorf("could not read config.yml: %w", err)
 	}
-
-	if len(config.Systems) == 0 {
-		log.Println("No systems defined in config.yml.")
-		return nil
+	configured, err := parseSyncConfig(configData)
+	if err != nil {
+		return err
 	}
 	return h.RunInTransaction(func(tx core.App) error {
-		return syncSystems(tx, config.Systems)
+		plan, err := planSync(tx, configured)
+		if err != nil {
+			return err
+		}
+		if err := applySync(tx, plan); err != nil {
+			return err
+		}
+		log.Println("Systems synced with config.yml. Existing identities and unlisted systems retained.")
+		return nil
 	})
 }
 
-func syncSystems(h core.App, configured []systemConfig) error {
-	var firstUser *core.Record
+func parseSyncConfig(data []byte) ([]systemConfig, error) {
+	var cfg config
+	if len(data) > maxImportBytes || yaml.Unmarshal(data, &cfg) != nil {
+		return nil, fmt.Errorf("invalid config.yml (maximum 1 MiB)")
+	}
+	return cfg.Systems, nil
+}
 
-	// Create a map of email to user ID
-	userEmailToID := make(map[string]string)
-	users, err := h.FindAllRecords("users", dbx.NewExp("id != ''"))
+type syncRow struct {
+	ID               string `json:"id,omitempty"`
+	Name             string `json:"name"`
+	Action           string `json:"action"`
+	OwnershipChanged bool   `json:"ownership_changed"`
+}
+
+type syncItem struct {
+	row    syncRow
+	config systemConfig
+	target *core.Record
+	users  []string
+}
+
+type syncPlan struct {
+	items    []syncItem
+	retained int
+}
+
+// PreviewSyncConfig uses the same planner as startup but never applies the plan.
+func PreviewSyncConfig(e *core.RequestEvent) error {
+	e.Response.Header().Set("Cache-Control", "no-store")
+	e.Request.Body = http.MaxBytesReader(e.Response, e.Request.Body, 2*maxImportBytes)
+	var req struct {
+		Config string `json:"config"`
+	}
+	if err := e.BindBody(&req); err != nil || req.Config == "" {
+		return e.BadRequestError("Expected config.yml content.", nil)
+	}
+	configured, err := parseSyncConfig([]byte(req.Config))
 	if err != nil {
-		return err
+		return e.BadRequestError(err.Error(), nil)
 	}
-	if len(users) > 0 {
-		firstUser = users[0]
-		for _, user := range users {
-			userEmailToID[user.GetString("email")] = user.Id
-		}
+	plan, err := planSync(e.App, configured)
+	if err != nil {
+		return e.BadRequestError(err.Error(), nil)
+	}
+	rows := make([]syncRow, 0, len(plan.items))
+	for _, item := range plan.items {
+		rows = append(rows, item.row)
+	}
+	return e.JSON(200, map[string]any{"rows": rows, "retained": plan.retained})
+}
+
+func planSync(h core.App, configured []systemConfig) (syncPlan, error) {
+	var plan syncPlan
+	users, err := h.FindRecordsByFilter("users", "id != ''", "created,id", -1, 0)
+	if err != nil {
+		return plan, fmt.Errorf("could not read users")
+	}
+	userIDs := make(map[string]string, len(users))
+	for _, user := range users {
+		userIDs[user.GetString("email")] = user.Id
 	}
 
-	// add default settings for systems if not defined in config
-	for i := range configured {
-		system := &configured[i]
-		if system.Port == 0 {
-			system.Port = 45876
+	existing, err := h.FindAllRecords("systems", dbx.NewExp("id != ''"))
+	if err != nil {
+		return plan, fmt.Errorf("could not read systems")
+	}
+	type systemKey struct{ name, host, port string }
+	byID := make(map[string]*core.Record, len(existing))
+	byKey := make(map[systemKey][]*core.Record, len(existing))
+	for _, record := range existing {
+		byID[record.Id] = record
+		key := systemKey{record.GetString("name"), record.GetString("host"), record.GetString("port")}
+		byKey[key] = append(byKey[key], record)
+	}
+	seenIDs := make(map[string]bool)
+	seenKeys := make(map[systemKey]bool)
+	for i, entry := range configured {
+		if entry.Name == "" || entry.Host == "" {
+			return plan, fmt.Errorf("config.yml system %d requires name and host", i+1)
 		}
-		if len(users) > 0 && len(system.Users) == 0 {
-			// default to first user if none are defined
-			system.Users = []string{firstUser.Id}
+		var target *core.Record
+		if entry.ID != "" {
+			target = byID[entry.ID]
+			if target == nil {
+				return plan, fmt.Errorf("config.yml system %d has an ID not found on this Hub", i+1)
+			}
+			if entry.Port == 0 {
+				entry.Port = cast.ToUint16(target.Get("port"))
+			}
+		}
+		if entry.Port == 0 {
+			entry.Port = 45876
+		}
+		key := systemKey{entry.Name, entry.Host, cast.ToString(entry.Port)}
+		matches := byKey[key]
+		if seenKeys[key] || len(matches) > 1 || (len(matches) == 1 && target != nil && matches[0] != target) {
+			return plan, fmt.Errorf("config.yml system %d has a conflicting name, host and port", i+1)
+		}
+		seenKeys[key] = true
+		if target == nil && len(matches) == 1 {
+			target = matches[0]
+		}
+		item := syncItem{row: syncRow{Name: entry.Name, Action: "add"}, config: entry, target: target}
+		if entry.Users == nil {
+			if target != nil {
+				item.users = target.GetStringSlice("users")
+			} else if len(users) > 0 {
+				item.users = []string{users[0].Id}
+			}
 		} else {
-			// Convert email addresses to user IDs
-			userIDs := make([]string, 0, len(system.Users))
-			for _, email := range system.Users {
-				if id, ok := userEmailToID[email]; ok {
-					userIDs = append(userIDs, id)
-				} else {
-					log.Printf("User %s not found", email)
+			if len(entry.Users) == 0 {
+				return plan, fmt.Errorf("config.yml system %d needs at least one user; omit users to keep ownership", i+1)
+			}
+			item.users = make([]string, 0, len(entry.Users))
+			for _, email := range entry.Users {
+				id, ok := userIDs[email]
+				if !ok {
+					return plan, fmt.Errorf("config.yml system %d lists an unknown user", i+1)
+				}
+				if !slices.Contains(item.users, id) {
+					item.users = append(item.users, id)
 				}
 			}
-			system.Users = userIDs
 		}
+		if target != nil {
+			if seenIDs[target.Id] {
+				return plan, fmt.Errorf("config.yml system %d targets an already listed device", i+1)
+			}
+			seenIDs[target.Id] = true
+			item.row.ID = target.Id
+			before := target.GetStringSlice("users")
+			item.row.OwnershipChanged = len(before) != len(item.users) || slices.ContainsFunc(before, func(id string) bool {
+				return !slices.Contains(item.users, id)
+			})
+			item.row.Action = "keep"
+			if item.row.OwnershipChanged || entry.Name != target.GetString("name") ||
+				entry.Host != target.GetString("host") || key.port != target.GetString("port") {
+				item.row.Action = "update"
+			}
+		}
+		plan.items = append(plan.items, item)
 	}
+	plan.retained = len(existing) - len(seenIDs)
+	return plan, nil
+}
 
-	// Get existing systems
-	existingSystems, err := h.FindAllRecords("systems", dbx.NewExp("id != ''"))
+func applySync(h core.App, plan syncPlan) error {
+	collection, err := h.FindCollectionByNameOrId("systems")
 	if err != nil {
 		return err
 	}
-
-	// Create a map of existing systems
-	type systemKey struct{ name, host, port string }
-	existingSystemsMap := make(map[systemKey]*core.Record)
-	for _, system := range existingSystems {
-		key := systemKey{system.GetString("name"), system.GetString("host"), system.GetString("port")}
-		existingSystemsMap[key] = system
-	}
-
-	// Process systems from config
-	for _, sysConfig := range configured {
-		key := systemKey{sysConfig.Name, sysConfig.Host, cast.ToString(sysConfig.Port)}
-		if existingSystem, ok := existingSystemsMap[key]; ok {
-			// Update existing system
-			existingSystem.Set("name", sysConfig.Name)
-			existingSystem.Set("users", sysConfig.Users)
-			existingSystem.Set("port", sysConfig.Port)
-			if err := h.Save(existingSystem); err != nil {
-				return err
-			}
-
-		} else {
-			// Create new system
-			systemsCollection, err := h.FindCollectionByNameOrId("systems")
-			if err != nil {
-				return fmt.Errorf("failed to find systems collection: %v", err)
-			}
-			newSystem := core.NewRecord(systemsCollection)
-			newSystem.Set("name", sysConfig.Name)
-			newSystem.Set("host", sysConfig.Host)
-			newSystem.Set("port", sysConfig.Port)
-			newSystem.Set("users", sysConfig.Users)
-			newSystem.Set("info", system.Info{})
-			newSystem.Set("status", "pending")
-			if err := h.Save(newSystem); err != nil {
-				return fmt.Errorf("failed to create new system: %v", err)
-			}
-
-			// For new systems, generate token if not provided
-			token := sysConfig.Token
+	for i, item := range plan.items {
+		record := item.target
+		if item.row.Action == "keep" {
+			continue
+		}
+		if record == nil {
+			record = core.NewRecord(collection)
+			record.Set("info", system.Info{})
+			record.Set("status", "pending")
+		}
+		record.Set("name", item.config.Name)
+		record.Set("host", item.config.Host)
+		record.Set("port", item.config.Port)
+		record.Set("users", item.users)
+		if err := h.Save(record); err != nil {
+			return fmt.Errorf("could not save config.yml system %d", i+1)
+		}
+		if item.target == nil {
+			token := item.config.Token
 			if token == "" {
 				token = uuid.New().String()
 			}
-
-			// Create fingerprint record for new system
-			if err := createFingerprintRecord(h, newSystem.Id, token); err != nil {
-				return err
+			if err := createFingerprintRecord(h, record.Id, token); err != nil {
+				return fmt.Errorf("could not create identity for config.yml system %d", i+1)
 			}
-			existingSystemsMap[key] = newSystem
 		}
 	}
-
-	log.Println("Systems synced with config.yml. Existing identities and unlisted systems retained.")
 	return nil
 }
 
@@ -172,7 +261,7 @@ func generateYAMLFormat(h core.App, format string) (string, error) {
 	config := config{
 		Systems: make([]systemConfig, 0, len(systems)),
 	}
-	if format != "classic" {
+	if format != "classic" && format != "sync" {
 		config.Kind, config.TrafficSchema = "vpsmonitor-config", 1
 		if format == "traffic" {
 			config.Kind = "vpsmonitor-traffic"
@@ -224,11 +313,14 @@ func generateYAMLFormat(h core.App, format string) (string, error) {
 			Users: userEmails,
 			Token: systemTokenMap[system.Id],
 		}
-		if format != "classic" {
+		if format != "classic" && format != "sync" {
 			sysConfig.Traffic, err = readPortableTraffic(h, system.Id)
 			if err != nil {
 				return "", err
 			}
+		}
+		if format == "sync" {
+			sysConfig.ID, sysConfig.Token, sysConfig.Users = system.Id, "", nil
 		}
 		if format == "traffic" {
 			if sysConfig.Traffic == nil {
@@ -247,8 +339,11 @@ func generateYAMLFormat(h core.App, format string) (string, error) {
 
 	// Add a header to the YAML
 	header := "# Values for port, users, and token are optional.\n# Defaults are port 45876, the first created user, and a generated UUID token.\n\n"
-	if format != "classic" {
+	if format != "classic" && format != "sync" {
 		header = "# vpsmonitor portable configuration. Import through Settings > YAML Config.\n# No monitoring history or Hub private key is included.\n\n"
+	}
+	if format == "sync" {
+		header = "# Startup sync for this Hub only. IDs refer to existing devices.\n# Omitted users preserve ownership; explicit users replace it.\n\n"
 	}
 	yamlData = append([]byte(header), yamlData...)
 
@@ -292,7 +387,7 @@ func GetYamlConfig(e *core.RequestEvent) error {
 	if format == "" {
 		format = "classic"
 	}
-	if format != "classic" && format != "combined" && format != "traffic" {
+	if format != "classic" && format != "combined" && format != "traffic" && format != "sync" {
 		return e.BadRequestError("Invalid export format", nil)
 	}
 	configContent, err := generateYAMLFormat(e.App, format)

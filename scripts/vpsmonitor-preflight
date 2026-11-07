@@ -1,59 +1,112 @@
 #!/usr/bin/env python3
-"""Read-only Tailscale authorization and Agent ingress checks."""
+"""Check Tailscale authorization and Agent ingress without using credentials."""
 import argparse
 import json
+import math
 import subprocess
 import sys
+import time
+import uuid
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("role", choices=("hub", "agent"))
     parser.add_argument("endpoint", nargs="?", help="Hub's dedicated Tailnet HTTP(S) origin")
-    parser.add_argument("--image", default="ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.2")
+    parser.add_argument("--image", default="ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.3")
+    parser.add_argument("--tailscale-bin", default="tailscale", help="Tailscale executable or absolute path")
+    parser.add_argument("--tailscale-socket", help="Nonstandard tailscaled Unix socket path")
+    parser.add_argument("--timeout", type=float, default=90, metavar="SECONDS",
+                        help="Overall check deadline (default: 90); cleanup can take up to 5 seconds more")
     args = parser.parse_args()
     if args.role == "agent" and not args.endpoint:
         parser.error("agent requires the Hub Tailnet origin")
+    if not math.isfinite(args.timeout) or args.timeout <= 0:
+        parser.error("--timeout must be a positive number")
+
+    deadline = time.monotonic() + args.timeout
+    stage = "Tailscale status"
+    container = None
+    active = None
+
+    def run(cmd, *, capture=True, limit=None):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise subprocess.TimeoutExpired(cmd, args.timeout)
+        return subprocess.run(cmd, capture_output=capture, text=True,
+                              timeout=min(remaining, limit) if limit else remaining)
 
     try:
-        result = subprocess.run(["tailscale", "status", "--json"], capture_output=True, timeout=8)
-    except FileNotFoundError:
-        sys.exit("Tailscale CLI is missing. Install Tailscale on this host and authorize the device.")
-    except subprocess.TimeoutExpired:
-        sys.exit("Cannot read Tailscale status. Check that the host daemon is running and accessible.")
-    try:
-        status = json.loads(result.stdout)
-        node = status.get("Self") or {}
-        authorized = (status.get("BackendState") == "Running" and node.get("InNetworkMap")
-                      and not node.get("Expired") and node.get("TailscaleIPs"))
-    except (ValueError, AttributeError):
-        sys.exit("Cannot read Tailscale status. Check that the host daemon is running and accessible.")
-    if not authorized:
-        sys.exit("Tailscale is not authorized or has no Tailnet IP. Sign in and approve this device in Tailscale.")
-    print("Host Tailscale is running and the device is authorized.", flush=True)
-    if args.role == "hub":
+        active = args.tailscale_bin
+        command = [active]
+        if args.tailscale_socket:
+            command.append("--socket=" + args.tailscale_socket)
+        result = run(command + ["status", "--json"], limit=8)
         try:
-            version = subprocess.check_output(["docker", "version", "--format", "{{.Server.Version}}"],
-                                              text=True, stderr=subprocess.DEVNULL, timeout=8)
-            major = int(version.strip().split(".", 1)[0])
-        except (OSError, ValueError, subprocess.SubprocessError):
-            sys.exit("Cannot read the Hub Docker Engine version. Check Docker and your context.")
-        if major < 28:
-            sys.exit("Hub needs Docker Engine 28 or newer for loopback-only Agent port publishing.")
-        print("Hub Docker Engine supports loopback-only port publishing.")
-        return
+            if result.returncode:
+                raise ValueError()
+            status = json.loads(result.stdout)
+            node = status.get("Self") or {}
+            authorized = (status.get("BackendState") == "Running" and node.get("InNetworkMap")
+                          and not node.get("Expired") and node.get("TailscaleIPs"))
+        except (ValueError, AttributeError):
+            sys.exit("Cannot read Tailscale status. Check the daemon, CLI path and socket permissions.")
+        if not authorized:
+            sys.exit("Tailscale is not authorized or has no Tailnet IP. Sign in and approve this device.")
+        print("Host Tailscale is running and the device is authorized.", flush=True)
 
-    # Exercise the real Agent networking and TLS without mounting the data or passing a token.
-    try:
-        result = subprocess.run([
-            "docker", "run", "--rm", "--network", "host", "--cap-drop", "ALL",
-            "--security-opt", "no-new-privileges", "-e", "HUB_URL=" + args.endpoint,
+        active = "docker"
+        stage = "Docker Engine"
+        result = run([active, "version", "--format", "{{.Server.Version}}"], limit=8)
+        try:
+            if result.returncode:
+                raise ValueError()
+            major = int(result.stdout.strip().split(".", 1)[0])
+        except ValueError:
+            sys.exit("Cannot read the Docker Engine version. Check Docker and your context.")
+        if args.role == "hub":
+            if major < 28:
+                sys.exit("Hub needs Docker Engine 28 or newer for loopback-only Agent port publishing.")
+            print("Hub Docker Engine supports loopback-only port publishing.")
+            return
+
+        stage = "Agent image"
+        if run([active, "image", "inspect", "--format", "{{.Id}}", args.image]).returncode:
+            print("Pulling the Agent probe image.", flush=True)
+            if run([active, "pull", args.image]).returncode:
+                sys.exit("Cannot pull the Agent image. Check the registry or use --image for a verified local image.")
+
+        # Create separately so cleanup can address the container even if start is interrupted.
+        stage = "Agent probe container creation"
+        container = "vpsmonitor-preflight-" + uuid.uuid4().hex
+        result = run([
+            active, "create", "--rm", "--pull=never", "--name", container, "--network", "host",
+            "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "-e", "HUB_URL=" + args.endpoint,
             args.image, "preflight",
         ])
+        if result.returncode:
+            sys.exit("Cannot create the Agent probe container. Check Docker host networking.")
+        stage = "Agent route, TCP/TLS and ingress probe"
+        result = run([active, "start", "--attach", container], capture=False)
+        if result.returncode:
+            sys.exit("Agent preflight failed. Use the probe result above to identify the failing layer.")
     except FileNotFoundError:
-        sys.exit("Docker CLI is missing. Install Docker Engine and Compose on this host.")
-    if result.returncode:
-        sys.exit("Agent preflight failed. Check the Hub Agent endpoint and TCP access in your Tailnet policy.")
+        sys.exit("Cannot find " + active + ". Install it or supply the correct executable path.")
+    except OSError:
+        sys.exit(stage + " could not run. Check executable permissions and host configuration.")
+    except subprocess.TimeoutExpired:
+        sys.exit(stage + " timed out. Check this layer or increase --timeout.")
+    except KeyboardInterrupt:
+        sys.exit("Preflight interrupted.")
+    finally:
+        if container:
+            try:
+                cleanup = subprocess.run(["docker", "rm", "--force", "--volumes", container], capture_output=True,
+                                         text=True, timeout=5)
+                if cleanup.returncode and "No such container" not in cleanup.stderr:
+                    raise RuntimeError()
+            except (OSError, subprocess.TimeoutExpired, RuntimeError):
+                sys.exit("Could not clean up temporary probe: " + container + ". Check Docker and remove it by name.")
 
 
 if __name__ == "__main__":

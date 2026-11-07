@@ -70,6 +70,10 @@ msgstr "{count, plural, one {{countString} 小时} other {{countString} 小时}}
 msgid "{count, plural, one {{countString} minute} few {{countString} minutes} many {{countString} minutes} other {{countString} minutes}}"
 msgstr "{count, plural, one {{countString} 分钟} few {{countString} 分钟} many {{countString} 分钟} other {{countString} 分钟}}"
 
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "{days} days left"
+msgstr "剩 {days} 天"
+
 #: src/components/network-monitors-table/network-monitors-columns.tsx
 msgid "{daysLeft, plural, one {# day} other {# days}}"
 msgstr "{daysLeft, plural, other {# 天}}"
@@ -105,6 +109,10 @@ msgstr "{value, plural, one {# 天} other {# 天}}"
 #: src/components/traffic/traffic-settings-dialog.tsx
 msgid "0 means no quota. 1 TB = 1,000 GB."
 msgstr "0 表示不设配额，1 TB = 1,000 GB。"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "1 day left"
+msgstr "剩 1 天"
 
 #: src/lib/utils.ts
 msgid "1 hour"
@@ -170,6 +178,7 @@ msgid "Active state"
 msgstr "活动状态"
 
 #: src/components/network-monitors-table/monitor-dialog.tsx
+#: src/components/routes/settings/config-yaml.tsx
 msgid "Add"
 msgstr "添加"
 
@@ -230,6 +239,10 @@ msgstr "客户端"
 #: src/components/routes/system/history-status.tsx
 msgid "Agent disconnected; showing the last synced cache."
 msgstr "Agent 已离线，显示最后同步的缓存。"
+
+#: src/components/install-dropdowns.tsx
+msgid "Agent installation settings are not ready"
+msgstr "Agent 安装配置尚未就绪"
 
 #: src/components/routes/system/history-status.tsx
 msgid "Agent offline cache: 7 days, one sample per minute."
@@ -493,8 +506,8 @@ msgid "Capacity"
 msgstr "容量"
 
 #: src/components/routes/settings/config-yaml.tsx
-msgid "Caution - potential data loss"
-msgstr "注意：可能丢失数据"
+#~ msgid "Caution - potential data loss"
+#~ msgstr "注意：可能丢失数据"
 
 #: src/components/routes/settings/general.tsx
 #~ msgid "Celsius (°C)"
@@ -701,20 +714,21 @@ msgstr "复制批量配置"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
+#: src/components/routes/settings/tokens-fingerprints.tsx
 msgctxt "Button to copy docker compose file content"
 msgid "Copy docker compose"
 msgstr "复制 docker compose 文件"
 
 #: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgctxt "Button to copy docker run command"
-msgid "Copy docker run"
-msgstr "复制 docker run 命令"
+#~ msgctxt "Button to copy docker run command"
+#~ msgid "Copy docker run"
+#~ msgstr "复制 docker run 命令"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgctxt "Environment variables"
-msgid "Copy env"
-msgstr "复制环境变量"
+#~ msgctxt "Environment variables"
+#~ msgid "Copy env"
+#~ msgstr "复制环境变量"
 
 #: src/components/alerts/alerts-sheet.tsx
 msgctxt "Copy alerts from another system"
@@ -755,8 +769,8 @@ msgid "Copy token"
 msgstr "复制令牌"
 
 #: src/components/routes/settings/tokens-fingerprints.tsx
-msgid "Copy YAML"
-msgstr "复制 YAML"
+#~ msgid "Copy YAML"
+#~ msgstr "复制 YAML"
 
 #: src/components/routes/system.tsx
 msgctxt "Core system metrics"
@@ -1080,6 +1094,7 @@ msgstr "暂时"
 #: src/components/network-monitors-table/network-monitors-table.tsx
 #: src/components/routes/settings/alerts-history-data-table.tsx
 #: src/components/routes/settings/config-yaml.tsx
+#: src/components/routes/settings/config-yaml.tsx
 #: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/heartbeat.tsx
 #: src/components/routes/settings/heartbeat.tsx
@@ -1107,8 +1122,8 @@ msgid "Exec main PID"
 msgstr "执行主进程 ID"
 
 #: src/components/routes/settings/config-yaml.tsx
-msgid "Existing systems not defined in <0>config.yml</0> will be deleted. Please make regular backups."
-msgstr "未在<0>config.yml</0>中定义的客户端将被删除。请定期备份。"
+#~ msgid "Existing systems not defined in <0>config.yml</0> will be deleted. Please make regular backups."
+#~ msgstr "未在<0>config.yml</0>中定义的客户端将被删除。请定期备份。"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Exited active"
@@ -1135,6 +1150,10 @@ msgstr "导出"
 #: src/components/routes/settings/config-yaml.tsx
 msgid "Export configuration"
 msgstr "导出配置"
+
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Export for this Hub"
+msgstr "导出当前 Hub 的同步配置"
 
 #: src/components/routes/settings/config-yaml.tsx
 msgid "Export traffic settings only"
@@ -1436,6 +1455,10 @@ msgstr "周期数据不完整"
 msgid "Initializing"
 msgstr "正在初始化"
 
+#: src/components/add-system.tsx
+msgid "Install and authorize Tailscale on the VPS, then run the Agent preflight."
+msgstr "在 VPS 安装并授权 Tailscale，再运行 Agent 部署预检。"
+
 #: src/components/routes/settings/import-systems.tsx
 msgid "Interface"
 msgstr "网络接口"
@@ -1474,6 +1497,10 @@ msgstr "流量设置无效"
 msgid "Invalid YAML. Use an original vpsmonitor export with 1–1000 systems, at most 1 MiB. Check names, hosts, ports, tokens and users."
 msgstr "YAML 无效。请使用原版 vpsmonitor 导出格式，包含 1–1000 个系统，且不超过 1 MiB。请检查名称、主机地址、端口、Token 和用户字段。"
 
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Keep"
+msgstr "保留"
+
 #: src/components/routes/settings/import-systems.tsx
 msgid "Keep current traffic settings; enable traffic updates to apply this row"
 msgstr "保留当前流量设置；勾选应用流量设置后才会更新"
@@ -1495,6 +1522,10 @@ msgstr "布局"
 #: src/components/routes/settings/general.tsx
 msgid "Layout width"
 msgstr "布局宽度"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Less than 1 day left"
+msgstr "不足 1 天"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Lifecycle"
@@ -1596,6 +1627,7 @@ msgstr "管理显示和通知偏好。"
 msgid "Manage systems with config.yml (advanced)"
 msgstr "使用 config.yml 管理系统（高级）"
 
+#: src/components/add-system.tsx
 #: src/components/routes/settings/tokens-fingerprints.tsx
 msgid "Manual setup instructions"
 msgstr "手动设置说明"
@@ -1835,8 +1867,8 @@ msgid "Offline history is not enabled on this agent. Update to the Plus Agent to
 msgstr "当前 Agent 未启用离线缓存。请使用新版 Plus Agent，以保留最近 7 天的本地样本。"
 
 #: src/components/routes/settings/config-yaml.tsx
-msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
-msgstr "每次重启时，数据库中的系统将更新以匹配文件中定义的系统。"
+#~ msgid "On each restart, systems in the database will be updated to match the systems defined in the file."
+#~ msgstr "每次重启时，数据库中的系统将更新以匹配文件中定义的系统。"
 
 #. placeholder {0}: alert.value
 #: src/components/active-alerts.tsx
@@ -1904,6 +1936,10 @@ msgstr "仅出站流量"
 #: src/components/alerts/alerts-sheet.tsx
 msgid "Overwrite existing alerts"
 msgstr "覆盖现有警报"
+
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Ownership changes"
+msgstr "归属将变更"
 
 #. Software package
 #: src/components/routes/system/package-updates-table.tsx
@@ -2080,6 +2116,10 @@ msgstr "按邮箱保留原有用户分配"
 msgid "Preview import"
 msgstr "预览导入"
 
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Preview startup sync"
+msgstr "预览启动同步"
+
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Process started"
 msgstr "进程启动"
@@ -2169,6 +2209,10 @@ msgstr "刷新"
 #: src/components/routes/system/traffic-panel.tsx
 msgid "Refresh traffic"
 msgstr "刷新流量"
+
+#: src/components/traffic/traffic-usage-cell.tsx
+msgid "Refreshing billing period"
+msgstr "正在更新账期"
 
 #: src/components/systemd-table/systemd-table.tsx
 msgid "Relationships"
@@ -2472,6 +2516,10 @@ msgstr "数据已过期"
 msgid "Start Time"
 msgstr "开始时间"
 
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Startup sync matches by device ID first and keeps devices outside the file. Omit users to keep ownership."
+msgstr "启动同步优先按设备 ID 匹配，清单外的设备会保留。省略 users 字段即可保留原归属。"
+
 #. Context: alert state (active or resolved)
 #: src/components/alerts-history-columns.tsx
 #: src/components/routes/settings/quiet-hours.tsx
@@ -2618,6 +2666,10 @@ msgstr "导入预览已变化，请核对新的预览后再次确认。"
 #: src/components/routes/settings/heartbeat.tsx
 msgid "The overall status is <0>ok</0> when all systems are up, <1>warn</1> when alerts are triggered, and <2>error</2> when any system is down."
 msgstr "当所有系统都正常运行时，整体状态为 <0>ok</0>；当触发警报时为 <1>警告</1>；当任何系统故障时为 <2>错误</2>。"
+
+#: src/components/routes/settings/config-yaml.tsx
+msgid "The YAML file must be 1 MiB or smaller."
+msgstr "YAML 文件不能超过 1 MiB。"
 
 #: src/components/login/forgot-pass-form.tsx
 msgid "Then log into the backend and reset your user account password in the users table."
@@ -2887,6 +2939,11 @@ msgstr "未知"
 msgid "Unlimited"
 msgstr "无限制"
 
+#. placeholder {0}: syncPreview.retained
+#: src/components/routes/settings/config-yaml.tsx
+msgid "Unlisted devices kept: {0}. Preview only; no changes applied."
+msgstr "将保留 {0} 台未列出的设备。此处仅预览，未应用任何变更。"
+
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Unsupported platform"
 msgstr "当前平台不支持"
@@ -2906,6 +2963,7 @@ msgstr "在线 ({upSystemsLength})"
 msgid "Up to date"
 msgstr "已是最新"
 
+#: src/components/routes/settings/config-yaml.tsx
 #: src/components/routes/settings/quiet-hours.tsx
 msgid "Update"
 msgstr "更新"
@@ -3133,21 +3191,3 @@ msgstr "是"
 #: src/components/routes/settings/layout.tsx
 msgid "Your user settings have been updated."
 msgstr "您的用户设置已更新。"
-
-msgid "Agent installation settings are not ready"
-msgstr "Agent 安装配置尚未就绪"
-
-msgid "Refreshing billing period"
-msgstr "正在更新账期"
-
-msgid "Less than 1 day left"
-msgstr "不足 1 天"
-
-msgid "1 day left"
-msgstr "剩 1 天"
-
-msgid "{days} days left"
-msgstr "剩 {days} 天"
-
-msgid "Install and authorize Tailscale on the VPS, then run the Agent preflight."
-msgstr "在 VPS 安装并授权 Tailscale，再运行 Agent 部署预检。"

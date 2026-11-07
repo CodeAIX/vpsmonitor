@@ -501,6 +501,7 @@ const SystemTableRow = memo(
 							key={cell.id}
 							style={{
 								width: cell.column.getSize(),
+								minWidth: cell.column.columnDef.minSize,
 								height: rowHeight,
 							}}
 							className="py-0 ps-4.5"

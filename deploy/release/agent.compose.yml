@@ -1,7 +1,7 @@
 name: vpsmonitor-agent
 services:
   agent:
-    image: ghcr.io/codeaix/vpsmonitor-agent:${VPSMONITOR_VERSION:-v0.1.0-beta.2}
+    image: ghcr.io/codeaix/vpsmonitor-agent:${VPSMONITOR_VERSION:-v0.1.0-beta.3}
     restart: unless-stopped
     network_mode: host
     cap_drop: [ALL]
