@@ -239,7 +239,7 @@ func (p *updater) update() (updated bool, err error) {
 
 func FetchLatestRelease(ctx context.Context, client HttpClient, url string) (*release, error) {
 	if url == "" {
-		url = getApiURL(false, "henrygd", "vpsmonitor")
+		url = getApiURL(false, "CodeAIX", "vpsmonitor")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -283,7 +283,7 @@ func downloadFile(
 	useMirror bool,
 ) error {
 	if useMirror {
-		url = strings.Replace(url, "github.com", "gh.vpsmonitor.dev", 1)
+		// Private binary mirrors are not part of vpsmonitor.
 	}
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
@@ -393,7 +393,7 @@ func isGlibc() bool {
 
 func getApiURL(useMirror bool, owner, repo string) string {
 	if useMirror {
-		return fmt.Sprintf("https://github.com/CodeAIX/vpsmonitor", owner, repo)
+		return fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, repo)
 	}
 	return fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, repo)
 }

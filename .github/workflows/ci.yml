@@ -2,6 +2,7 @@ name: vpsmonitor CI
 on:
   push:
     branches: [main]
+    paths: ["agent/**", "internal/**", "*.go", "go.mod", "go.sum", "Dockerfile.*", "deploy/**", "scripts/**", ".github/workflows/**", ".dockerignore", "LICENSE", "NOTICE"]
   pull_request:
   workflow_dispatch:
 permissions:
