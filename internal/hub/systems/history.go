@@ -16,7 +16,7 @@ import (
 )
 
 var HistoryPeriods = map[string]int64{"1m": 1, "10m": 10, "20m": 20, "120m": 120, "480m": 480}
-var historyRetention = map[string]time.Duration{"1m": system.HistoryRetention, "10m": 12 * time.Hour, "20m": 24 * time.Hour, "120m": 7 * 24 * time.Hour, "480m": 30 * 24 * time.Hour}
+var historyRetention = map[string]time.Duration{"1m": system.HistoryRetention, "10m": 12 * time.Hour, "20m": 24 * time.Hour, "120m": 7 * 24 * time.Hour, "480m": system.HistoryRetention}
 
 func historyState(app core.App, id string) (*core.Record, error) {
 	r, err := app.FindFirstRecordByFilter("agent_history_state", "system={:id}", dbx.Params{"id": id})
@@ -33,7 +33,17 @@ func historyState(app core.App, id string) (*core.Record, error) {
 }
 
 func validHistoryInfo(info *system.HistoryInfo) bool {
-	return info != nil && info.Version == system.HistoryVersion && info.RetentionSeconds == int64(system.HistoryRetention/time.Second) && info.Oldest >= 0 && info.Newest >= info.Oldest && info.Newest <= time.Now().Add(5*time.Minute).UnixMilli() && info.Samples >= 0 && info.Samples <= int(system.HistoryRetention/time.Minute)+1 && info.Bytes >= 0 && info.Bytes <= 1024*1024*1024 && len(info.Error) <= 64
+	if info == nil || info.Version != system.HistoryVersion {
+		return false
+	}
+	switch info.RetentionSeconds {
+	case int64(system.HistoryLegacyRetention / time.Second), int64(system.HistoryRetention / time.Second):
+	default:
+		return false
+	}
+	return info.Oldest >= 0 && info.Newest >= info.Oldest && info.Newest <= time.Now().Add(5*time.Minute).UnixMilli() &&
+		info.Samples >= 0 && info.Samples <= int(info.RetentionSeconds/60)+1 &&
+		info.Bytes >= 0 && info.Bytes <= 1024*1024*1024 && len(info.Error) <= 64
 }
 
 // Runs independently of current records and alerts, with at most two systems
@@ -42,14 +52,15 @@ func (sys *System) startHistorySync(info *system.HistoryInfo) {
 	if (info != nil && !validHistoryInfo(info)) || !sys.historySyncing.CompareAndSwap(false, true) {
 		return
 	}
-	select {
-	case sys.manager.historySlots <- struct{}{}:
-	default:
-		sys.historySyncing.Store(false)
-		return
-	}
 	sys.manager.updaters.Go(func() {
 		defer sys.historySyncing.Store(false)
+		// Keep one pending worker per system so a long replay cannot make the
+		// same systems miss every turn when several Agents reconnect together.
+		select {
+		case sys.manager.historySlots <- struct{}{}:
+		case <-sys.ctx.Done():
+			return
+		}
 		defer func() { <-sys.manager.historySlots }()
 		ctx, cancel := context.WithTimeout(sys.ctx, 20*time.Second)
 		defer cancel()
@@ -85,7 +96,8 @@ func (sys *System) syncHistory(ctx context.Context, info system.HistoryInfo) err
 		return SaveHistoryPage(ctx, sys.manager.hub, sys.Id, info, system.HistoryRequest{After: cursor, Before: cursor, Limit: system.HistoryMaxPageSamples}, system.HistoryPage{Version: system.HistoryVersion, Next: cursor, Info: info}, time.Now())
 	}
 	for n := 0; n < 80 && ctx.Err() == nil; n++ {
-		req := system.HistoryRequest{After: cursor, Before: info.Newest, Limit: system.HistoryMaxPageSamples}
+		req := system.HistoryRequest{After: cursor, Before: info.Newest, Daily: info.DailyPages}
+		req.Limit = req.MaxSamples()
 		var page system.HistoryPage
 		if err := sys.request(ctx, common.GetHistory, req, &page); err != nil {
 			return err
@@ -104,16 +116,29 @@ func (sys *System) syncHistory(ctx context.Context, info system.HistoryInfo) err
 // SaveHistoryPage advances the per-Hub cursor in the same transaction as raw
 // samples and all chart tiers. No calls to createRecords or alert handlers occur.
 func SaveHistoryPage(ctx context.Context, app core.App, id string, info system.HistoryInfo, req system.HistoryRequest, page system.HistoryPage, now time.Time) error {
-	if !validHistoryInfo(&info) || page.Version != system.HistoryVersion || len(page.Samples) > system.HistoryMaxPageSamples || page.Next < req.After || page.Next > req.Before || (page.More && page.Next <= req.After) {
+	if !validHistoryInfo(&info) || page.Version != system.HistoryVersion ||
+		req.Limit < 1 || req.Limit > req.MaxSamples() ||
+		page.Next < req.After || page.Next > req.Before || (page.More && page.Next <= req.After) {
 		return errors.New("invalid history page bounds")
 	}
+	if err := page.UnpackDaily(req); err != nil {
+		return err
+	}
+	if len(page.Samples) > req.Limit {
+		return errors.New("history page has too many samples")
+	}
+	budget := 2 * system.HistoryMaxPageBytes
+	if req.Daily {
+		budget = system.HistoryMaxDailyRawBytes + 4096 // Allow for the page envelope.
+	}
 	encoded, err := json.Marshal(page)
-	if err != nil || len(encoded) > 2*system.HistoryMaxPageBytes {
+	if err != nil || len(encoded) > budget {
 		return errors.New("history page too large")
 	}
 	last := req.After
 	for _, sample := range page.Samples {
-		if sample.At <= last || sample.At > page.Next || sample.Validate(now) != nil {
+		if sample.At <= last || sample.At > page.Next || sample.Validate(now) != nil ||
+			(req.Daily && sample.At/86400000 != page.Next/86400000) {
 			return errors.New("invalid history sample order or value")
 		}
 		last = sample.At
@@ -180,14 +205,14 @@ func SaveHistoryPage(ctx context.Context, app core.App, id string, info system.H
 			}
 		}
 		cursor := state.GetInt64("cursor")
-		if cursor > 0 && info.Oldest > cursor+2*60000 {
-			state.Set("gap_from", cursor+60000)
+		if cursor > 0 && info.Oldest/60000 > cursor/60000+1 {
+			state.Set("gap_from", (cursor/60000+1)*60000)
 			state.Set("gap_to", info.Oldest)
 		}
 		previous := req.After
 		for _, sample := range page.Samples {
-			if previous > 0 && sample.At > previous+2*60000 {
-				state.Set("gap_from", previous+60000)
+			if previous > 0 && sample.At/60000 > previous/60000+1 {
+				state.Set("gap_from", (previous/60000+1)*60000)
 				state.Set("gap_to", sample.At)
 			}
 			previous = sample.At
@@ -212,7 +237,10 @@ func SaveHistoryPage(ctx context.Context, app core.App, id string, info system.H
 		if err := tx.SaveWithContext(ctx, state); err != nil {
 			return err
 		}
-		return pruneHistory(ctx, tx, id, now)
+		if len(page.Samples) != 0 {
+			return pruneHistory(ctx, tx, id, now)
+		}
+		return nil
 	})
 }
 
@@ -271,19 +299,16 @@ func pruneHistory(ctx context.Context, app core.App, id string, now time.Time) e
 		return err
 	}
 	if total.Bytes > 256*1024*1024 {
-		var rows []*core.Record
-		if err := app.RecordQuery("agent_history_records").WithContext(ctx).AndWhere(dbx.HashExp{"system": id, "type": "1m"}).OrderBy("stamp").Limit(10081).All(&rows); err != nil {
-			return err
-		}
-		for _, r := range rows {
-			if total.Bytes <= 256*1024*1024 {
-				break
-			}
-			total.Bytes -= r.GetInt64("bytes")
-			if err := app.DeleteWithContext(ctx, r); err != nil {
-				return err
-			}
-		}
+		// Keep the newest suffix within budget without loading every raw row
+		// into Go, including during a month of catch-up.
+		_, err := app.DB().NewQuery(`
+			DELETE FROM agent_history_records WHERE id IN (
+				SELECT id FROM (
+					SELECT id, SUM(bytes) OVER (ORDER BY stamp DESC ROWS UNBOUNDED PRECEDING) AS kept_bytes
+					FROM agent_history_records WHERE system={:id} AND type='1m'
+				) WHERE kept_bytes > {:budget}
+			)`).Bind(dbx.Params{"id": id, "budget": 256 * 1024 * 1024}).WithContext(ctx).Execute()
+		return err
 	}
 	return nil
 }

@@ -140,8 +140,12 @@ msgid "24 hours"
 msgstr "24 hours"
 
 #: src/lib/utils.ts
-msgid "30 days"
-msgstr "30 days"
+#~ msgid "30 days"
+#~ msgstr "30 days"
+
+#: src/lib/utils.ts
+msgid "31 days"
+msgstr "31 days"
 
 #. Load average
 #: src/components/routes/system/charts/load-average-chart.tsx
@@ -240,8 +244,12 @@ msgid "Agent installation settings are not ready"
 msgstr "Agent installation settings are not ready"
 
 #: src/components/routes/system/history-status.tsx
-msgid "Agent offline cache: 7 days, one sample per minute."
-msgstr "Agent offline cache: 7 days, one sample per minute."
+#~ msgid "Agent offline cache: 7 days, one sample per minute."
+#~ msgstr "Agent offline cache: 7 days, one sample per minute."
+
+#: src/components/routes/system/history-status.tsx
+msgid "Agent offline cache: up to {days} days, one sample per minute."
+msgstr "Agent offline cache: up to {days} days, one sample per minute."
 
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Agent requires host networking"
@@ -418,6 +426,7 @@ msgid "Billing interface"
 msgstr "Billing interface"
 
 #: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "Billing period"
 msgstr "Billing period"
 
@@ -1858,8 +1867,12 @@ msgid "Offline · last known"
 msgstr "Offline · last known"
 
 #: src/components/routes/system/history-status.tsx
-msgid "Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache."
-msgstr "Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache."
+#~ msgid "Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache."
+#~ msgstr "Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache."
+
+#: src/components/routes/system/history-status.tsx
+msgid "Offline history is unavailable on this Agent."
+msgstr "Offline history is unavailable on this Agent."
 
 #: src/components/routes/settings/config-yaml.tsx
 #~ msgid "On each restart, systems in the database will be updated to match the systems defined in the file."

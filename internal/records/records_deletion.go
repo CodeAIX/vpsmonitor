@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/CodeAIX/vpsmonitor/internal/entities/system"
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
 )
@@ -67,11 +68,11 @@ func deleteOldSystemStats(app core.App) error {
 		retention  time.Duration
 	}
 	recordData := []RecordDeletionData{
-		{recordType: "1m", retention: time.Hour},             // 1 hour
-		{recordType: "10m", retention: 12 * time.Hour},       // 12 hours
-		{recordType: "20m", retention: 24 * time.Hour},       // 1 day
-		{recordType: "120m", retention: 7 * 24 * time.Hour},  // 7 days
-		{recordType: "480m", retention: 30 * 24 * time.Hour}, // 30 days
+		{recordType: "1m", retention: time.Hour},                 // 1 hour
+		{recordType: "10m", retention: 12 * time.Hour},           // 12 hours
+		{recordType: "20m", retention: 24 * time.Hour},           // 1 day
+		{recordType: "120m", retention: 7 * 24 * time.Hour},      // 7 days
+		{recordType: "480m", retention: system.HistoryRetention}, // 31 days
 	}
 
 	now := time.Now().UTC()

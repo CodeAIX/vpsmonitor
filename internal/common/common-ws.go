@@ -1,10 +1,10 @@
 package common
 
 import (
-	"github.com/fxamacker/cbor/v2"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/smart"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/system"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/systemd"
+	"github.com/fxamacker/cbor/v2"
 )
 
 type WebSocketAction = uint8
@@ -30,7 +30,7 @@ const (
 	GetPackageUpdates
 	// Request recent logs for a systemd service from the agent.
 	GetSystemdLogs
-	// Read bounded pages of Agent's seven-day local metrics journal.
+	// Read bounded pages of Agent's local metrics journal.
 	GetHistory
 	// Add new actions here...
 )

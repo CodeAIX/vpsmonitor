@@ -145,8 +145,12 @@ msgid "24 hours"
 msgstr "24小時"
 
 #: src/lib/utils.ts
-msgid "30 days"
-msgstr "30天"
+#~ msgid "30 days"
+#~ msgstr "30天"
+
+#: src/lib/utils.ts
+msgid "31 days"
+msgstr "31 天"
 
 #. Load average
 #: src/components/routes/system/charts/load-average-chart.tsx
@@ -245,8 +249,12 @@ msgid "Agent installation settings are not ready"
 msgstr "Agent 安装配置尚未就绪"
 
 #: src/components/routes/system/history-status.tsx
-msgid "Agent offline cache: 7 days, one sample per minute."
-msgstr "Agent 离线缓存：7 天，每分钟采樣。"
+#~ msgid "Agent offline cache: 7 days, one sample per minute."
+#~ msgstr "Agent 离线缓存：7 天，每分钟采樣。"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Agent offline cache: up to {days} days, one sample per minute."
+msgstr "Agent 离线缓存：最多保留 {days} 天，每分钟采样一次。"
 
 #: src/components/traffic/traffic-usage-cell.tsx
 msgid "Agent requires host networking"
@@ -423,6 +431,7 @@ msgid "Billing interface"
 msgstr "计费网卡"
 
 #: src/components/routes/system/traffic-panel.tsx
+#: src/components/traffic/traffic-usage-cell.tsx
 msgid "Billing period"
 msgstr "账单周期"
 
@@ -1863,8 +1872,12 @@ msgid "Offline · last known"
 msgstr "离线 · 显示最后记录"
 
 #: src/components/routes/system/history-status.tsx
-msgid "Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache."
-msgstr "當前 Agent 未啟用离线缓存。請使用新版 Plus Agent，以保留最近 7 天的本地樣本。"
+#~ msgid "Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache."
+#~ msgstr "當前 Agent 未啟用离线缓存。請使用新版 Plus Agent，以保留最近 7 天的本地樣本。"
+
+#: src/components/routes/system/history-status.tsx
+msgid "Offline history is unavailable on this Agent."
+msgstr "此 Agent 的离线历史不可用。"
 
 #: src/components/routes/settings/config-yaml.tsx
 #~ msgid "On each restart, systems in the database will be updated to match the systems defined in the file."

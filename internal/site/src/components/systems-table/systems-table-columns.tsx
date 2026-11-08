@@ -213,9 +213,13 @@ export function SystemsTableColumns(viewMode: "table" | "grid", traffic: Record<
 			header: sortableHeader,
 			sortUndefined: "last",
 			cell: ({ row }) => (
-				<Link href={getPagePath($router, "system", { id: row.original.id })} className="relative z-10 block w-full">
-					<TrafficUsageCell compact item={traffic[row.original.id]} loading={trafficLoading} error={trafficError} />
-				</Link>
+				<TrafficUsageCell
+					compact
+					href={getPagePath($router, "system", { id: row.original.id })}
+					item={traffic[row.original.id]}
+					loading={trafficLoading}
+					error={trafficError}
+				/>
 			),
 		},
 		{

@@ -11,7 +11,7 @@ import { decimalString, formatBytes, toFixedFloat } from "@/lib/utils"
 /**
  * Converts deprecated GB memory values from records before 0.21.1 to bytes.
  * TODO: remove when the deprecated fields are removed. Also needed for realtime data from
- * agents < 0.21.1, which is not migrated by the hub, and for stored records (kept up to 30 days).
+ * agents < 0.21.1, which is not migrated by the hub, and for stored records (kept up to 31 days).
  */
 const gbToBytes = (gb?: number) => (gb === undefined ? undefined : gb * 1024 ** 3)
 

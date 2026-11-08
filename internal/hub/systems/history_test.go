@@ -93,8 +93,8 @@ func TestHistoryReplayAllChartTiersIdempotencyAndNoLiveSideEffects(t *testing.T)
 	require.Equal(t, float64(7), live.Cpu)
 	require.Equal(t, "sentinel-live-version", live.AgentVersion)
 	// After raw retention expires, the month aggregate still survives cleanup.
-	require.NoError(t, CleanupHistory(app, now.Add(8*24*time.Hour)))
-	n, err := app.CountRecords("agent_history_records", dbx.HashExp{"system": sys.Id, "type": "1m"})
+	require.NoError(t, CleanupHistory(app, now.Add(26*24*time.Hour)))
+	n, err := app.CountRecords("agent_history_records", dbx.HashExp{"system": sys.Id, "type": "1m", "stamp": start.Truncate(time.Minute).UnixMilli()})
 	require.NoError(t, err)
 	require.EqualValues(t, 0, n)
 	n, err = app.CountRecords("agent_history_records", dbx.HashExp{"system": sys.Id, "type": "480m"})
@@ -176,4 +176,34 @@ func TestHistoryMigrationRoundTripPreservesOriginalRecords(t *testing.T) {
 		require.NoError(t, err)
 		require.Zero(t, n)
 	}
+}
+
+func TestHistoryAcceptsSevenDayAgentsAndReplaysDay31InOnePage(t *testing.T) {
+	sys, app := newTestSystemWithHub(t)
+	now := time.Now().UTC().Truncate(time.Minute)
+	start := now.Add(-30 * 24 * time.Hour).Truncate(24 * time.Hour)
+	info, samples := historyFixture(start, 1440)
+	info.DailyPages = true
+	require.True(t, validHistoryInfo(&info))
+	legacy := info
+	legacy.RetentionSeconds = int64(system.HistoryLegacyRetention / time.Second)
+	legacy.DailyPages = false
+	require.True(t, validHistoryInfo(&legacy))
+	legacy.Samples = int(legacy.RetentionSeconds/60) + 2
+	require.False(t, validHistoryInfo(&legacy))
+
+	page := system.HistoryPage{Version: system.HistoryVersion, Samples: samples, Next: info.Newest, Info: info}
+	require.NoError(t, page.PackDaily())
+	req := system.HistoryRequest{Before: info.Newest, Limit: system.HistoryDailySamples, Daily: true}
+	require.NoError(t, SaveHistoryPage(t.Context(), app, sys.Id, info, req, page, now))
+	require.NoError(t, SaveHistoryPage(t.Context(), app, sys.Id, info, req, page, now))
+	count, err := app.CountRecords("agent_history_records", dbx.HashExp{"system": sys.Id, "type": "1m"})
+	require.NoError(t, err)
+	require.EqualValues(t, 1440, count)
+	count, err = app.CountRecords("agent_history_records", dbx.HashExp{"system": sys.Id, "type": "480m"})
+	require.NoError(t, err)
+	require.EqualValues(t, 3, count)
+	state, err := historyState(app, sys.Id)
+	require.NoError(t, err)
+	require.Equal(t, info.Newest, state.GetInt64("cursor"))
 }

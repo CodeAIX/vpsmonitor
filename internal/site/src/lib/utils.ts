@@ -170,10 +170,10 @@ export const chartTimeData: ChartTimeData = {
 	"30d": {
 		type: "480m",
 		expectedInterval: 60_000 * 480,
-		label: () => t`30 days`,
-		ticks: 30,
+		label: () => t`31 days`,
+		ticks: 31,
 		format: (timestamp: string) => formatDay(timestamp),
-		getOffset: (endTime: Date) => timeDay.offset(endTime, -30),
+		getOffset: (endTime: Date) => new Date(endTime.getTime() - 31 * 86_400_000),
 	},
 }
 

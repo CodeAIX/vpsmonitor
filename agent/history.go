@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fxamacker/cbor/v2"
 	"github.com/CodeAIX/vpsmonitor/internal/common"
 	"github.com/CodeAIX/vpsmonitor/internal/entities/system"
 	"github.com/CodeAIX/vpsmonitor/internal/history"
+	"github.com/fxamacker/cbor/v2"
 )
 
 type agentHistory struct {
@@ -75,10 +75,14 @@ func (h *agentHistory) start(ctx context.Context, a *Agent) func() {
 	ctx, cancel := context.WithCancel(ctx)
 	var wg sync.WaitGroup
 	wg.Go(func() {
+		cleanup := time.NewTicker(time.Hour)
+		defer cleanup.Stop()
 		for {
 			select {
 			case <-ctx.Done():
 				return
+			case now := <-cleanup.C:
+				h.store.Prune(now)
 			case b := <-h.queue:
 				var sample system.HistorySample
 				if json.Unmarshal(b, &sample) == nil {
@@ -120,16 +124,29 @@ func (*GetHistoryHandler) Handle(ctx *HandlerContext) error {
 	if ctx.Agent.history.store == nil {
 		return ctx.SendResponse(system.HistoryPage{Version: system.HistoryVersion, Next: req.After, Info: ctx.Agent.history.info()}, ctx.RequestID)
 	}
-	page, err := ctx.Agent.history.store.Page(req, time.Now())
-	if err != nil {
-		return err
+	now := time.Now()
+	for {
+		page, err := ctx.Agent.history.store.Page(req, now)
+		if err != nil {
+			return err
+		}
+		count := len(page.Samples)
+		if req.Daily {
+			if err := page.PackDaily(); err != nil {
+				return err
+			}
+		}
+		encoded, err := cbor.Marshal(page)
+		if err != nil {
+			return err
+		}
+		if len(encoded) <= system.HistoryMaxPageBytes {
+			return ctx.SendResponse(page, ctx.RequestID)
+		}
+		if !req.Daily || count < 2 {
+			return errors.New("history page exceeds limit")
+		}
+		// Incompressible days may need more than one bounded message.
+		req.Limit = count / 2
 	}
-	encoded, err := cbor.Marshal(page)
-	if err != nil {
-		return err
-	}
-	if len(encoded) > system.HistoryMaxPageBytes {
-		return errors.New("history page exceeds limit")
-	}
-	return ctx.SendResponse(page, ctx.RequestID)
 }

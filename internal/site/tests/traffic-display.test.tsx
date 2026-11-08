@@ -14,7 +14,10 @@ mock.module("@lingui/core/macro", () => ({
 	t: (strings: TemplateStringsArray, ...values: unknown[]) =>
 		strings.reduce((text, part, i) => text + part + (values[i] ?? ""), ""),
 }))
-mock.module("@/lib/utils", () => ({ decimalString: (value: number, digits: number) => value.toFixed(digits) }))
+mock.module("@/lib/utils", () => ({
+	cn: (...classes: string[]) => classes.filter(Boolean).join(" "),
+	decimalString: (value: number, digits: number) => value.toFixed(digits),
+}))
 const { TrafficUsageCell } = await import("../src/components/traffic/traffic-usage-cell")
 
 describe("traffic date and byte display", () => {
@@ -92,12 +95,14 @@ describe("compact traffic meter", () => {
 	} as TrafficView
 
 	test("shows one rounded meter and keeps coverage out of the visible cell", () => {
-		const html = renderToStaticMarkup(<TrafficUsageCell compact item={item} />)
+		const html = renderToStaticMarkup(<TrafficUsageCell compact item={item} href="/system/example" />)
 		expect(html).toContain('aria-valuenow="100"')
 		expect(html).toContain("width:100%")
 		expect(html).toContain("rounded-full bg-green-500")
 		expect(html).toContain("2026-10-15 → 2026-11-15")
 		expect(html).toContain("Offline · last known")
+		expect(html).toContain('href="/system/example"')
+		expect(html).not.toContain('title="')
 		expect(html.replace(/<[^>]*>/g, "")).toBe("120.0%9 days left")
 	})
 

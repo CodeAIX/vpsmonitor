@@ -41,14 +41,15 @@ export default function HistoryStatus({ systemId, online }: { systemId: string; 
 		return (
 			<p className="text-sm text-muted-foreground">
 				<Trans>
-					Offline history is not enabled on this agent. Update to the Plus Agent to keep a seven-day local cache.
+					Offline history is unavailable on this Agent.
 				</Trans>
 			</p>
 		)
+	const days = Math.floor(state.retention_seconds / 86_400)
 	return (
 		<div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground" aria-live="polite">
 			<span>
-				<Trans>Agent offline cache: 7 days, one sample per minute.</Trans>
+				<Trans>Agent offline cache: up to {days} days, one sample per minute.</Trans>
 			</span>
 			<span>
 				{!online ? (

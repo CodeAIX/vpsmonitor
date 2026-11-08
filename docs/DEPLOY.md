@@ -1,25 +1,15 @@
-# vpsmonitor v0.1.0-beta.3 部署与升级
+# vpsmonitor v0.1.0-beta.4 部署与升级
 
 Hub 和 Agent 镜像支持 Linux `amd64` 与 `arm64`。Agent 通过宿主 Tailscale 主动连接 Hub 的专用端口。网页登录使用独立的入口。部署前准备已授权的 Tailscale、Docker Engine 与 Compose。Hub 的默认桥接模板需要 Docker Engine **28 或更新版本**，以保证回环发布端口的网络隔离。VPS 上的 Agent 需要宿主 `tailscale0` 和 Docker host 网络。[Docker 端口发布说明](https://docs.docker.com/engine/network/port-publishing)
 
-- Hub `ghcr.io/codeaix/vpsmonitor-hub:v0.1.0-beta.3`
-- Agent `ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.3`
+- Hub `ghcr.io/codeaix/vpsmonitor-hub:v0.1.0-beta.4`
+- Agent `ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.4`
 
-## 已有 beta.2：在原项目覆盖升级
+## 已有 beta.3：在原项目覆盖升级
 
-**覆盖安装使用正在运行的 Hub 和 Agent 的原 Compose 项目。** 先升级原 Hub，再选一台已有 VPS 的 Agent 验收；其它 Agent 可以暂留 beta.2。新装请从第 1 节开始；只有明确需要隔离环境时，才为试装另建项目、目录、端口、卷和 Token。
+按 [beta.4 正式覆盖升级执行单](https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.4/UPGRADE-beta.4.md) 操作。先备份并更新 Hub，确认所有旧 Agent 的实时样本及历史游标继续推进，再逐台更新 Agent。保留现有 Compose 项目、挂载、身份、凭据和入口，旧缓存可以继续读取。新版 Agent 逐步累积到滚动 31 天。
 
-1. **切换前核对。** 在原 Hub 和选定 VPS 的原目录，用启动时相同的 `-p`、`-f`、`--env-file` 参数执行 `docker compose ps` 和 `docker compose config --quiet`。核对以下命令输出中的项目、服务、镜像、实际卷和发布端口。Agent 服务名以实际项目为准。保存现有镜像引用和摘要作为回退点；模板中的版本变量也可能被 shell 环境覆盖，用 `docker compose config --images` 核实。不要将含有 Token 的完整 Compose 渲染结果贴到日志或聊天中。
-
-   ```sh
-   docker inspect --format '{{.Config.Image}} {{.Image}} {{index .Config.Labels "com.docker.compose.project"}}/{{index .Config.Labels "com.docker.compose.service"}} {{json .HostConfig.PortBindings}}{{range .Mounts}}{{println}}{{.Source}} -> {{.Destination}}{{end}}' <现有容器>
-   docker image inspect --format '{{json .RepoDigests}}' <上一步的镜像ID>
-   ```
-
-2. **保留配置，只换镜像。** 备份原 Compose 文件、覆盖文件和 `.env`；把 Hub 镜像或其 `VPSMONITOR_VERSION` 改为 `v0.1.0-beta.3`（也可使用发布页对应摘要），先 `docker compose pull <Hub服务>`。保留原 `/vpsmonitor_data` 挂载、网页登录端口和 LAN 限源规则、`APP_URL`、`AGENT_HUB_URL` 及 Serve 转发。正式部署示例：`10.10.10.10:8090` 继续供网页；Agent 继续走 `100.66.66.1:8090 → 127.0.0.1:28091 → 容器 8091`。无需改防火墙或 Tailnet 授权。
-3. **备份并覆盖 Hub。** 停止 Hub 服务，归档原数据目录或对具名卷制作一致性备份，确认归档可读取且包含数据库和身份文件。接着在原项目执行 `docker compose up -d --no-deps <Hub服务>`。确认旧账号能登录，原设备和流量配置仍在，未升级的 Agent 能重新连接。此次不需要改数据目录或重新登记设备。
-4. **覆盖一台已有 Agent。** 保留其原 `KEY`、`TOKEN`、`HUB_URL`、计量接口及挂载到 `/var/lib/vpsmonitor-agent` 的目录或卷。在原项目仅改镜像版本；先拉取，必要时在停止后备份 Agent 数据，然后用 `docker compose up -d --no-deps <Agent服务>` 重建。同样核对实际卷；不使用 `down -v`。
-5. **验收后再升级其它 VPS。** 等原设备出现至少两条升级后的资源样本。核对流量方向、配额和账期未变，并用少量实际流量确认累计值继续增长。检查首页流量条、详情的入站和出站、旧历史及 Agent 连接。若试装失败，在原项目恢复旧镜像引用、执行 `up -d --no-deps`，确认数据和连接恢复；只有确需数据回退时，才停服务并从备份恢复卷。恢复旧数据会舍弃备份之后的样本。
+如果仍在用 beta.2，可按 [beta.3 原位升级指南](https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.3/DEPLOY.md) 先升级到 beta.3。
 
 ### fnOS 重启恢复验收
 
@@ -32,7 +22,7 @@ Hub 和 Agent 镜像支持 Linux `amd64` 与 `arm64`。Agent 通过宿主 Tailsc
 ```sh
 mkdir -p ~/vpsmonitor/hub
 cd ~/vpsmonitor/hub
-release=https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.3
+release=https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.4
 curl -fL "$release/hub.compose.yml" -o compose.yml
 curl -fL "$release/vpsmonitor-preflight" -o vpsmonitor-preflight
 python3 vpsmonitor-preflight hub
@@ -68,7 +58,7 @@ Serve 命令中的外部端口要与 `AGENT_HUB_URL` 一致，后端端口要与
 ```sh
 mkdir -p ~/vpsmonitor/agent
 cd ~/vpsmonitor/agent
-release=https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.3
+release=https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.4
 curl -fL "$release/vpsmonitor-preflight" -o vpsmonitor-preflight
 python3 vpsmonitor-preflight agent http://100.64.0.10:8091
 ```
@@ -84,7 +74,7 @@ docker compose pull && docker compose up -d
 docker compose ps
 ```
 
-[下载 Agent 模板](https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.3/agent.compose.yml)也可以，手动在权限为 `0600` 的 `.env` 中填入新版 Hub 公钥 `KEY`、Agent `TOKEN` 和 Tailnet `HUB_URL`。两种入口使用同一个 Compose 服务 `agent` 和挂载 `./agent_data:/var/lib/vpsmonitor-agent`。测试环境和正式环境使用各自的项目名和挂载目录。
+[下载 Agent 模板](https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.4/agent.compose.yml)也可以，手动在权限为 `0600` 的 `.env` 中填入新版 Hub 公钥 `KEY`、Agent `TOKEN` 和 Tailnet `HUB_URL`。两种入口使用同一个 Compose 服务 `agent` 和挂载 `./agent_data:/var/lib/vpsmonitor-agent`。测试环境和正式环境使用各自的项目名和挂载目录。
 
 ## 3. 验收与诊断
 
