@@ -49,7 +49,8 @@ func validHistoryInfo(info *system.HistoryInfo) bool {
 // Runs independently of current records and alerts, with at most two systems
 // transferring in the background. Cancellation follows the system lifetime.
 func (sys *System) startHistorySync(info *system.HistoryInfo) {
-	if (info != nil && !validHistoryInfo(info)) || !sys.historySyncing.CompareAndSwap(false, true) {
+	slots := sys.manager.historySlots
+	if slots == nil || (info != nil && !validHistoryInfo(info)) || !sys.historySyncing.CompareAndSwap(false, true) {
 		return
 	}
 	sys.manager.updaters.Go(func() {
@@ -57,11 +58,11 @@ func (sys *System) startHistorySync(info *system.HistoryInfo) {
 		// Keep one pending worker per system so a long replay cannot make the
 		// same systems miss every turn when several Agents reconnect together.
 		select {
-		case sys.manager.historySlots <- struct{}{}:
+		case slots <- struct{}{}:
 		case <-sys.ctx.Done():
 			return
 		}
-		defer func() { <-sys.manager.historySlots }()
+		defer func() { <-slots }()
 		ctx, cancel := context.WithTimeout(sys.ctx, 20*time.Second)
 		defer cancel()
 		if info == nil {
