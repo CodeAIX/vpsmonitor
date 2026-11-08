@@ -13,7 +13,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("role", choices=("hub", "agent"))
     parser.add_argument("endpoint", nargs="?", help="Hub's dedicated Tailnet HTTP(S) origin")
-    parser.add_argument("--image", default="ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.4")
+    parser.add_argument("--image", default="ghcr.io/codeaix/vpsmonitor-agent:v1.0.0")
     parser.add_argument("--tailscale-bin", default="tailscale", help="Tailscale executable or absolute path")
     parser.add_argument("--tailscale-socket", help="Nonstandard tailscaled Unix socket path")
     parser.add_argument("--timeout", type=float, default=90, metavar="SECONDS",

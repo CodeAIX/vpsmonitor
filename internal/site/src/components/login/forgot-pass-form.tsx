@@ -97,11 +97,8 @@ export default function ForgotPassword() {
 					<p className="text-primary/70 text-[0.95em] leading-relaxed">
 						<Trans>Then log into the backend and reset your user account password in the users table.</Trans>
 					</p>
-					<code className="bg-muted rounded-sm py-0.5 px-2.5 me-auto text-sm">
-						./vpsmonitor superuser upsert user@example.com password
-					</code>
-					<code className="bg-muted rounded-sm py-0.5 px-2.5 me-auto text-sm">
-						docker exec vpsmonitor /vpsmonitor superuser upsert name@example.com password
+					<code className="bg-muted rounded-sm py-0.5 px-2.5 text-sm break-words">
+						docker compose exec hub /hub superuser upsert name@example.com password --dir=/vpsmonitor_data
 					</code>
 				</DialogContent>
 			</Dialog>

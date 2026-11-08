@@ -28,9 +28,10 @@ test("Compose interpolation cannot substitute a secret value from the operator e
 })
 
 test("a release Hub generates pull-only Agent instructions pinned to its matching tag", () => {
-	const args = ["key", "token", "http://100.65.1.2:8091", "unknown", "0.1.0-beta.2", "v0.1.0-beta.2"] as const
+	const args = ["key", "token", "http://100.65.1.2:8091", "unknown", "1.0.0", "v1.0.0"] as const
 	const yaml = agentCompose(...args)
-	expect(yaml).toContain("image: ghcr.io/codeaix/vpsmonitor-agent:v0.1.0-beta.2")
+	expect(yaml).toContain("image: ghcr.io/codeaix/vpsmonitor-agent:v1.0.0")
+	expect(yaml).toContain("container_name: ${VPSMONITOR_AGENT_CONTAINER_NAME:-vpsmonitor-agent}")
 	expect(yaml).toContain('HUB_URL: "http://100.65.1.2:8091"')
 	expect(yaml).toContain("./agent_data:/var/lib/vpsmonitor-agent")
 	expect(yaml).toContain("network_mode: host")

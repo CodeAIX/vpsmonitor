@@ -8,7 +8,7 @@ const composeQuote = (value: string) => JSON.stringify(value.replaceAll("$", () 
 
 // The release download and the Hub both use the same template. The Hub fills
 // in credentials and pins its version. Source builds supply a build context.
-export function agentCompose(key: string, token: string, hub: string, commit: string, version = "0.1.0-dev", tag = ""): string {
+export function agentCompose(key: string, token: string, hub: string, commit: string, version = "1.0.0-dev", tag = ""): string {
 	const release = /^v\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?$/.test(tag)
 	const image = release ? `    image: ghcr.io/codeaix/vpsmonitor-agent:${tag}` : `    image: vpsmonitor-agent:dev
     build:

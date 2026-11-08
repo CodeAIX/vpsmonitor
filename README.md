@@ -1,27 +1,19 @@
 # vpsmonitor
 
-面向 Linux VPS 的独立监控工具，基于 Beszel/Beszel+ 已验证的监控基础独立开发。
+vpsmonitor 是面向 Linux VPS 的监控工具。Hub 提供网页管理，Agent 通过宿主 Tailscale 主动连接。两个 Docker 镜像均支持 Linux amd64 和 arm64。
 
-- CPU、内存/交换区、磁盘与 IO、负载、实时带宽、在线状态、Docker 和告警。
-- **内置原生流量计量**：读取宿主公网出口累计 RX/TX，自动排除 Docker 网桥、veth、回环和常见隧道网口；选择唯一默认出口，支持手动指定。
-- **无需 vnStat**：Agent 自主管理基线、UTC 日值和持久化；首次安装从零累计，不计入安装前的开机总量。
-- **31 天资源离线缓存**，以及独立保留的流量日账本、套餐配额和账期展示。
-- 配置与流量设置导入导出，面向新安装；不迁移 Beszel/Beszel+ 历史数据或身份密钥。
-- 温度、风扇、电池、Wi-Fi 从默认采集与常用界面中移除，GPU/SMART 不作为默认采集项目。
+- CPU、内存、磁盘、负载、实时带宽、Docker、在线状态和告警。
+- 读取宿主网络出口的累计 RX/TX，按 UTC 日期保存原生流量账本。支持自然月、自定义账期、配额及仅出站或双向计量。
+- Agent 按 UTC 天保存分钟资源样本，滚动保留最多 31 天，Hub 重连后自动补传。
+- 网页可导入导出设备配置和流量设置。
 
-当前 Docker 测试版：[v0.1.0-beta.4](https://github.com/CodeAIX/vpsmonitor/releases/tag/v0.1.0-beta.4)。Hub 和 Agent 均支持 Linux amd64/arm64，测试版尚未完成生产 VPS 长期验收。
+正式版为 [v1.0.0](https://github.com/CodeAIX/vpsmonitor/releases/tag/v1.0.0)。Docker 容器默认命名为 `vpsmonitor-hub` 和 `vpsmonitor-agent`。
 
 ## 安装
 
-```sh
-mkdir -p ~/vpsmonitor/hub
-cd ~/vpsmonitor/hub
-curl -fL https://github.com/CodeAIX/vpsmonitor/releases/download/v0.1.0-beta.4/hub.compose.yml -o compose.yml
-```
-
-模板下载后先按部署指南配置 Tailscale，再启动 Hub。默认网页地址为 `http://127.0.0.1:8090`。Agent 使用专用 Tailscale 入口。在两端完成宿主 Tailscale 预检，并按部署指南设置 `AGENT_HUB_URL` 与 Tailscale Serve，再从 Hub 复制 Agent Compose 到 VPS。
-
-从零安装、更新、回退与卸载旧 Beszel+ 的步骤见 [安装维护指南](docs/DEPLOY.md)。开发者可使用 [源码部署指南](docs/SOURCE-DEPLOY.md)；[开发版验证记录](docs/VALIDATION.md) 保留原生计量和断线补传的早期验收证据。
+- [手动安装](docs/DEPLOY.md) · 逐步配置 Hub、Tailscale 授权和 VPS Agent。
+- [AI 辅助安装](docs/DEPLOY-AI.md) · 可直接交给有主机访问权限的管理助手。
+- [架构](docs/ARCHITECTURE.md) · 流量账本、资源归档和补传机制。
 
 ## 开发
 
@@ -34,4 +26,4 @@ cd ../..
 go test -race -tags=testing -p 2 -timeout=20m ./...
 ```
 
-CI 自行测试和构建，不自动跟随原上游或重放补丁。产品版本独立于内部能力基线。见 [独立开发方案](docs/ARCHITECTURE.md) 和 [发布流程](docs/RELEASING.md)。原作者许可和来源见 [NOTICE](NOTICE) 与 [LICENSE](LICENSE)。
+开发者可参考 [源码构建](docs/SOURCE-DEPLOY.md) 和 [发布流程](docs/RELEASING.md)。代码来源和许可见 [NOTICE](NOTICE) 与 [LICENSE](LICENSE)。

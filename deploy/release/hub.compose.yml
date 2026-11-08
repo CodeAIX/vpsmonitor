@@ -1,7 +1,8 @@
 name: vpsmonitor-hub
 services:
   hub:
-    image: ghcr.io/codeaix/vpsmonitor-hub:${VPSMONITOR_VERSION:-v0.1.0-beta.4}
+    container_name: ${VPSMONITOR_HUB_CONTAINER_NAME:-vpsmonitor-hub}
+    image: ghcr.io/codeaix/vpsmonitor-hub:${VPSMONITOR_VERSION:-v1.0.0}
     restart: unless-stopped
     ports:
       - "${HUB_BIND:-127.0.0.1}:${HUB_PORT:-8090}:8090"
